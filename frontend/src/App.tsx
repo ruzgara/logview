@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import PocketBase from 'pocketbase'
 import './App.css'
+import ConnectionsTable from './components/ConnectionsTable'
+import EntityPanel from './components/EntityPanel'
+import type { ConnectionRecord, RouterRecord, ServiceRecord } from './types'
 
 const PB_URL = import.meta.env.VITE_PB_URL ?? 'http://127.0.0.1:8090'
 const PB_TOKEN = import.meta.env.VITE_PB_TOKEN as string | undefined
@@ -20,47 +23,13 @@ const getPreferredTheme = (): Theme =>
     ? 'dark'
     : 'light'
 
-type ConnectionRecord = {
-  id: string
-  real_ip?: string
-  country?: string
-  address?: string
-  path?: string
-  router?: string
-  service?: string
-  created?: string
-}
-
-type RouterRecord = {
-  id: string
-  name: string
-}
-
-type ServiceRecord = {
-  id: string
-  name: string
-}
-
 type RealtimeEvent = {
   action: 'create' | 'update' | 'delete'
   record: ConnectionRecord
 }
 
-const timeFormatter = new Intl.DateTimeFormat('en-GB', {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-})
-
 const sortByName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name)
-
-const buildDetails = (connection: ConnectionRecord) => {
-  const parts = [connection.address, connection.path].filter(
-    (value): value is string => Boolean(value && value.trim()),
-  )
-  return parts.length ? parts.join(' · ') : '—'
-}
 
 function App() {
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
@@ -87,8 +56,6 @@ function App() {
   >('connecting')
   const [realtimeError, setRealtimeError] = useState<string | null>(null)
 
-  const listRef = useRef<HTMLDivElement | null>(null)
-  const stickToTopRef = useRef(true)
   const routerMapRef = useRef<Record<string, string>>({})
   const serviceMapRef = useRef<Record<string, string>>({})
   const detailRequestRef = useRef(0)
@@ -194,14 +161,6 @@ function App() {
       isMounted = false
     }
   }, [])
-
-  useEffect(() => {
-    const container = listRef.current
-    if (!container || !stickToTopRef.current) {
-      return
-    }
-    container.scrollTop = 0
-  }, [connections])
 
   useEffect(() => {
     let isMounted = true
@@ -325,14 +284,6 @@ function App() {
       pb.realtime.onDisconnect = undefined
     }
   }, [])
-
-  const handleScroll = () => {
-    const container = listRef.current
-    if (!container) {
-      return
-    }
-    stickToTopRef.current = container.scrollTop < 20
-  }
 
   const closeDetail = () => {
     detailRequestRef.current += 1
@@ -544,115 +495,37 @@ function App() {
         </section>
 
         <div className="content-grid">
-        <section className="connections">
-          <div className="connections-header">
-            <h2>Connections feed</h2>
-            <span>Newest events appear at the top</span>
-          </div>
-          <div
-            className="connections-list"
-            ref={listRef}
-            onScroll={handleScroll}
-          >
-            <div className="connections-table-header">
-              <div className="header-cell">Time</div>
-              <div className="header-cell ip">IP</div>
-              <div className="header-cell country">Country</div>
-              <div className="header-cell">Details</div>
-              <div className="header-cell router">Router</div>
-              <div className="header-cell service">Service</div>
+          <section className="connections">
+            <div className="connections-header">
+              <h2>Connections feed</h2>
+              <span>Newest events appear at the top</span>
             </div>
-            {connections.map((connection) => {
-              const routerName =
-                (connection.router && routerNameById[connection.router]) ||
-                connection.router ||
-                'Unknown router'
-              const serviceName =
-                (connection.service && serviceNameById[connection.service]) ||
-                connection.service ||
-                'Unknown service'
-              const details = buildDetails(connection)
-
-              return (
-                <div className="connection-row" key={connection.id}>
-                  <div className="connection-cell time">
-                    {connection.created
-                      ? timeFormatter.format(new Date(connection.created))
-                      : '--:--:--'}
-                  </div>
-                  <div className="connection-cell ip">
-                    {connection.real_ip || '—'}
-                  </div>
-                  <div className="connection-cell country">
-                    {connection.country || '—'}
-                  </div>
-                  <div className="connection-cell details" title={details}>
-                    {details}
-                  </div>
-                  <button
-                    type="button"
-                    className="connection-cell link-button router"
-                    onClick={() => openDetail('router', connection.router)}
-                    disabled={!connection.router}
-                  >
-                    {routerName}
-                  </button>
-                  <button
-                    type="button"
-                    className="connection-cell link-button service"
-                    onClick={() => openDetail('service', connection.service)}
-                    disabled={!connection.service}
-                  >
-                    {serviceName}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-
-        <aside className="panels">
-          <section className="panel">
-            <div className="panel-header">
-              <h2>Routers</h2>
-              <span>{routers.length}</span>
-            </div>
-            <div className="panel-list">
-              {routers.map((router) => (
-                <button
-                  key={router.id}
-                  id={`router-${router.id}`}
-                  type="button"
-                  className="panel-item"
-                  onClick={() => openDetail('router', router.id)}
-                >
-                  {router.name}
-                </button>
-              ))}
-            </div>
+            <ConnectionsTable
+              connections={connections}
+              routerNameById={routerNameById}
+              serviceNameById={serviceNameById}
+              onOpenDetail={openDetail}
+              containerClassName="connections-list"
+            />
           </section>
 
-          <section className="panel">
-            <div className="panel-header">
-              <h2>Services</h2>
-              <span>{services.length}</span>
-            </div>
-            <div className="panel-list">
-              {services.map((service) => (
-                <button
-                  key={service.id}
-                  id={`service-${service.id}`}
-                  type="button"
-                  className="panel-item"
-                  onClick={() => openDetail('service', service.id)}
-                >
-                  {service.name}
-                </button>
-              ))}
-            </div>
-          </section>
-        </aside>
-      </div>
+          <aside className="panels">
+            <EntityPanel
+              title="Routers"
+              count={routers.length}
+              items={routers}
+              idPrefix="router"
+              onSelect={(id) => openDetail('router', id)}
+            />
+            <EntityPanel
+              title="Services"
+              count={services.length}
+              items={services}
+              idPrefix="service"
+              onSelect={(id) => openDetail('service', id)}
+            />
+          </aside>
+        </div>
       </div>
 
       {detailModal && (
@@ -686,70 +559,13 @@ function App() {
                 </div>
               )}
               {!detailLoading && !detailError && (
-                <div className="detail-list">
-                  <div className="connections-table-header">
-                    <div className="header-cell">Time</div>
-                    <div className="header-cell ip">IP</div>
-                    <div className="header-cell country">Country</div>
-                    <div className="header-cell">Details</div>
-                    <div className="header-cell router">Router</div>
-                    <div className="header-cell service">Service</div>
-                  </div>
-                  {detailEvents.map((connection) => {
-                    const routerName =
-                      (connection.router &&
-                        routerNameById[connection.router]) ||
-                      connection.router ||
-                      'Unknown router'
-                    const serviceName =
-                      (connection.service &&
-                        serviceNameById[connection.service]) ||
-                      connection.service ||
-                      'Unknown service'
-                    const details = buildDetails(connection)
-
-                    return (
-                      <div className="connection-row" key={connection.id}>
-                        <div className="connection-cell time">
-                          {connection.created
-                            ? timeFormatter.format(
-                                new Date(connection.created),
-                              )
-                            : '--:--:--'}
-                        </div>
-                        <div className="connection-cell ip">
-                          {connection.real_ip || '—'}
-                        </div>
-                        <div className="connection-cell country">
-                          {connection.country || '—'}
-                        </div>
-                        <div className="connection-cell details" title={details}>
-                          {details}
-                        </div>
-                        <button
-                          type="button"
-                          className="connection-cell link-button router"
-                          onClick={() =>
-                            openDetail('router', connection.router)
-                          }
-                          disabled={!connection.router}
-                        >
-                          {routerName}
-                        </button>
-                        <button
-                          type="button"
-                          className="connection-cell link-button service"
-                          onClick={() =>
-                            openDetail('service', connection.service)
-                          }
-                          disabled={!connection.service}
-                        >
-                          {serviceName}
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
+                <ConnectionsTable
+                  connections={detailEvents}
+                  routerNameById={routerNameById}
+                  serviceNameById={serviceNameById}
+                  onOpenDetail={openDetail}
+                  containerClassName="detail-list"
+                />
               )}
             </div>
           </div>

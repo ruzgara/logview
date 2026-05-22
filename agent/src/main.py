@@ -32,7 +32,6 @@ def main() -> None:
         raise RuntimeError("PB_URL environment variable is required.")
     if not pb_token:
         raise RuntimeError("PB_TOKEN environment variable is required.")
-
     endpoint = f"{pb_url.rstrip('/')}/api/collections/connections/records"
     for batch in ingest_log_file(log_path, batch_size=2):
         for event in batch:
