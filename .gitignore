@@ -1,0 +1,9 @@
+test/*.log
+.DS_Store
+.localized
+__MACOSX/
+.AppleDouble
+.LSOverride
+Icon[]  
+*.swp
+*.local
