@@ -144,9 +144,6 @@ function ConnectionGlobe({
   useEffect(() => {
     fetch('https://unpkg.com/world-atlas@2/countries-110m.json')
       .then((r) => r.json())
-      .then((world) => {
-        // world-atlas is TopoJSON; convert inline via simple fetch of geojson instead
-      })
       .catch(() => {/* silent — polygons optional */})
 
     // Use a direct GeoJSON source instead

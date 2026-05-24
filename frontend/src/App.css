@@ -9,11 +9,12 @@
 }
 
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 420px) 1fr;
+  align-items: start;
+  gap: 20px;
+  flex-shrink: 0;
+  /* Prevents the header from compressing */
 }
 
 .header-actions {
@@ -21,6 +22,8 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
+  justify-self: end;
+  /* Ensure it stays pinned to the right */
 }
 
 .subtitle {
@@ -106,7 +109,7 @@
   transform: rotate(0);
 }
 
-.theme-switch .checkbox:checked + .label .ball {
+.theme-switch .checkbox:checked+.label .ball {
   transform: translateX(40px);
 }
 
@@ -129,6 +132,65 @@
 .status-metrics {
   font-size: 14px;
   color: var(--text-muted);
+}
+
+.alert-icon-container {
+  position: relative;
+}
+
+.alert-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.alert-icon:hover {
+  background: var(--warning-border);
+  transform: scale(1.05);
+}
+
+.alert-icon:active {
+  transform: scale(0.95);
+}
+
+.alert-expanded {
+  text-align: left;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-size: 14px;
+  max-width: 300px;
+  min-width: 240px;
+  white-space: normal;
+  z-index: 100;
+  box-shadow: var(--shadow);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .banner {
@@ -178,15 +240,26 @@
   gap: 20px;
   align-items: stretch;
   min-height: 0;
+  /* FIX: Prevents the container from breaking past its row boundary */
+  height: 100%; 
+  overflow: hidden; 
+}
+
+.feed-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .panels {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
   gap: 20px;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .panel {
@@ -197,7 +270,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  flex: 1 1 0;
+  overflow: hidden;
 }
 
 .panel-header {
@@ -205,6 +278,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .panel-header span {
@@ -218,8 +292,8 @@
   gap: 4px;
   overflow-y: auto;
   padding-right: 2px;
-  max-height: none;
-  flex: 1 1 auto;
+  /* FIX: Explicitly allows flex layout item to shrink and scroll */
+  flex: 1 1 minmax(0, auto); 
   min-height: 0;
 }
 
@@ -293,10 +367,14 @@
   z-index: 10;
 }
 
-.globe-card {
-  height: 420px;  /* or whatever fits your layout */
+.globe-hero {
+  height: 400px;
+  /* Adjust this value to dial in exact sizing */
+  width: 100%;
   border-radius: 8px;
   overflow: hidden;
+  margin-top: -12px;
+  /* Offsets padding slightly to align visually with the h1 */
 }
 
 .connections-table-header {
@@ -461,7 +539,13 @@
   }
 
   .content-grid {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 26vw, 320px);
+    gap: 20px;
+    align-items: stretch;
+    min-height: 0;
+    flex: 1 1 auto;
+    /* This forces the grid to expand */
   }
 
   .panel-list {
@@ -483,5 +567,20 @@
   .connection-cell.service,
   .connection-cell.country {
     grid-column: 1 / -1;
+  }
+  .header {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .header-actions {
+    justify-self: start;
+    align-items: flex-start;
+  }
+
+  /* Reset globe sizing for mobile */
+  .globe-hero {
+    height: 320px;
+    margin-top: 0;
   }
 }

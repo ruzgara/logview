@@ -58,6 +58,7 @@ function App() {
     'connecting' | 'connected' | 'error'
   >('connecting')
   const [realtimeError, setRealtimeError] = useState<string | null>(null)
+  const [alertExpanded, setAlertExpanded] = useState(false)
 
   const routerMapRef = useRef<Record<string, string>>({})
   const serviceMapRef = useRef<Record<string, string>>({})
@@ -380,9 +381,45 @@ function App() {
           <h1>Live Connections</h1>
           <p className="subtitle">Streaming PocketBase activity</p>
         </div>
+        <section className="globe-hero" aria-label="Connection globe">
+          <ConnectionGlobe
+            connections={liveConnections}
+            serverCountry="JP"
+            theme={theme}
+          />
+        </section>
         <div className="header-actions">
           <div className="status">
             <div className="status-line">
+              {(dataError || realtimeError) && (
+                <div className="alert-icon-container">
+                  <button
+                    type="button"
+                    className="alert-icon"
+                    onClick={() => setAlertExpanded(!alertExpanded)}
+                    aria-label={alertExpanded ? 'Hide alert' : 'Show alert'}
+                    aria-expanded={alertExpanded}
+                  >
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  {alertExpanded && (
+                    <div className="alert-expanded" role="alert">
+                      {dataError ?? realtimeError}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="theme-switch">
                 <input
                   type="checkbox"
@@ -488,20 +525,6 @@ function App() {
           </div>
         </div>
       </header>
-
-      {(dataError || realtimeError) && (
-        <div className="banner" role="alert">
-          {dataError ?? realtimeError}
-        </div>
-      )}
-
-      <section className="globe-hero" aria-label="Connection globe">
-        <ConnectionGlobe
-          connections={liveConnections}
-          serverCountry="JP"
-          theme={theme}
-        />
-      </section>
 
       <div className="content-grid">
         <div className="feed-column">
