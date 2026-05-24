@@ -293,6 +293,12 @@
   z-index: 10;
 }
 
+.globe-card {
+  height: 420px;  /* or whatever fits your layout */
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .connections-table-header {
   position: sticky;
   top: 0;

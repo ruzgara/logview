@@ -12,7 +12,8 @@
   "dependencies": {
     "pocketbase": "^0.26.9",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "react-globe.gl": "^2.38.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -4,6 +4,8 @@ import './App.css'
 import ConnectionsTable from './components/ConnectionsTable'
 import EntityPanel from './components/EntityPanel'
 import type { ConnectionRecord, RouterRecord, ServiceRecord } from './types'
+import ConnectionGlobe from './components/ConnectionGlobe'
+
 
 const PB_URL = import.meta.env.VITE_PB_URL ?? 'http://127.0.0.1:8090'
 const PB_TOKEN = import.meta.env.VITE_PB_TOKEN as string | undefined
@@ -19,7 +21,7 @@ type Theme = 'light' | 'dark'
 
 const getPreferredTheme = (): Theme =>
   typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    window.matchMedia?.('(prefers-color-scheme: dark)').matches
     ? 'dark'
     : 'light'
 
@@ -35,6 +37,7 @@ function App() {
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
   const [routers, setRouters] = useState<RouterRecord[]>([])
   const [services, setServices] = useState<ServiceRecord[]>([])
+  const [liveConnections, setLiveConnections] = useState<ConnectionRecord[]>([])
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') {
       return 'light'
@@ -233,6 +236,10 @@ function App() {
               return
             }
 
+            if (action === 'create') {
+              setLiveConnections((prev) => [record, ...prev].slice(0, 50))
+            }
+
             setConnections((prev) => {
               const existingIndex = prev.findIndex(
                 (item) => item.id === record.id,
@@ -369,7 +376,7 @@ function App() {
   return (
     <div className="dashboard">
       <header className="header">
-        <div>
+        <div className="header-copy">
           <h1>Live Connections</h1>
           <p className="subtitle">Streaming PocketBase activity</p>
         </div>
@@ -383,9 +390,8 @@ function App() {
                   id="theme-toggle"
                   checked={theme === 'dark'}
                   onChange={toggleTheme}
-                  aria-label={`Switch to ${
-                    theme === 'dark' ? 'light' : 'dark'
-                  } mode`}
+                  aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'
+                    } mode`}
                 />
                 <label htmlFor="theme-toggle" className="label">
                   <svg
@@ -489,12 +495,16 @@ function App() {
         </div>
       )}
 
-      <div className="workspace">
-        <section className="placeholder-card" aria-label="Placeholder">
-          <div className="placeholder-copy">Placeholder</div>
-        </section>
+      <section className="globe-hero" aria-label="Connection globe">
+        <ConnectionGlobe
+          connections={liveConnections}
+          serverCountry="JP"
+          theme={theme}
+        />
+      </section>
 
-        <div className="content-grid">
+      <div className="content-grid">
+        <div className="feed-column">
           <section className="connections">
             <div className="connections-header">
               <h2>Connections feed</h2>
@@ -508,24 +518,24 @@ function App() {
               containerClassName="connections-list"
             />
           </section>
-
-          <aside className="panels">
-            <EntityPanel
-              title="Routers"
-              count={routers.length}
-              items={routers}
-              idPrefix="router"
-              onSelect={(id) => openDetail('router', id)}
-            />
-            <EntityPanel
-              title="Services"
-              count={services.length}
-              items={services}
-              idPrefix="service"
-              onSelect={(id) => openDetail('service', id)}
-            />
-          </aside>
         </div>
+
+        <aside className="panels">
+          <EntityPanel
+            title="Routers"
+            count={routers.length}
+            items={routers}
+            idPrefix="router"
+            onSelect={(id) => openDetail('router', id)}
+          />
+          <EntityPanel
+            title="Services"
+            count={services.length}
+            items={services}
+            idPrefix="service"
+            onSelect={(id) => openDetail('service', id)}
+          />
+        </aside>
       </div>
 
       {detailModal && (
