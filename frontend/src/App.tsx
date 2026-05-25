@@ -1,21 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import PocketBase from 'pocketbase'
 import './App.css'
 import ConnectionsTable from './components/ConnectionsTable'
 import EntityPanel from './components/EntityPanel'
 import type { ConnectionRecord, RouterRecord, ServiceRecord } from './types'
 import ConnectionGlobe from './components/ConnectionGlobe'
+import AuthScreen from './components/AuthScreen'
+import { pb } from './pocketbase'
 
 
-const PB_URL = import.meta.env.VITE_PB_URL ?? 'http://127.0.0.1:8090'
-const PB_TOKEN = import.meta.env.VITE_PB_TOKEN as string | undefined
 const CONNECTIONS_LIMIT = 200
 const THEME_STORAGE_KEY = 'logview-theme'
-
-const pb = new PocketBase(PB_URL)
-if (PB_TOKEN) {
-  pb.authStore.save(PB_TOKEN, null)
-}
 
 type Theme = 'light' | 'dark'
 
@@ -33,7 +27,7 @@ type RealtimeEvent = {
 const sortByName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name)
 
-function App() {
+function Dashboard({ onSignOut }: { onSignOut: () => void }) {
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
   const [routers, setRouters] = useState<RouterRecord[]>([])
   const [services, setServices] = useState<ServiceRecord[]>([])
@@ -118,13 +112,6 @@ function App() {
     let isMounted = true
 
     const loadInitial = async () => {
-      if (!PB_TOKEN) {
-        setDataError('Missing VITE_PB_TOKEN for PocketBase authorization.')
-        setRealtimeStatus('error')
-        setRealtimeError('Missing VITE_PB_TOKEN for realtime connection.')
-        return
-      }
-
       try {
         const [routerData, serviceData, connectionData] = await Promise.all([
           pb.collection('routers').getList<RouterRecord>(1, 200, {
@@ -219,9 +206,6 @@ function App() {
     }
 
     const connectRealtime = async () => {
-      if (!PB_TOKEN) {
-        return
-      }
       setRealtimeStatus('connecting')
       try {
         unsubscribe = await pb
@@ -303,18 +287,6 @@ function App() {
 
   const openDetail = async (type: 'router' | 'service', id?: string) => {
     if (!id) {
-      return
-    }
-
-    if (!PB_TOKEN) {
-      setDetailModal({
-        type,
-        id,
-        name: type === 'router' ? id : id,
-      })
-      setDetailEvents([])
-      setDetailLoading(false)
-      setDetailError('Missing VITE_PB_TOKEN for PocketBase authorization.')
       return
     }
 
@@ -517,6 +489,13 @@ function App() {
               <span className={`status-pill ${realtimeStatus}`}>
                 {realtimeStatus === 'connected' ? 'Live' : 'Offline'}
               </span>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={onSignOut}
+              >
+                Sign out
+              </button>
             </div>
             <span className="status-metrics">
               {connections.length} connections · {routers.length} routers ·{' '}
@@ -622,6 +601,34 @@ function App() {
       )}
     </div>
   )
+}
+
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => pb.authStore.isValid,
+  )
+
+  useEffect(() => {
+    const unsubscribe = pb.authStore.onChange(() => {
+      setIsAuthenticated(pb.authStore.isValid)
+    }, true)
+
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
+  }, [])
+
+  const handleSignOut = () => {
+    pb.authStore.clear()
+  }
+
+  if (!isAuthenticated) {
+    return <AuthScreen />
+  }
+
+  return <Dashboard onSignOut={handleSignOut} />
 }
 
 export default App

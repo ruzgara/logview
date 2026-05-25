@@ -2,19 +2,18 @@ import json
 import os
 import requests
 from dataclasses import asdict
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 from file_ingest import ingest_log_file
 
 
-def _load_env_files() -> None:
-    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    load_dotenv(os.path.join(parent_dir, ".env"), override=False)
-    load_dotenv(os.path.join(parent_dir, ".env.local"), override=True)
-
+# def _load_env_files() -> None:
+#     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#     load_dotenv(os.path.join(parent_dir, ".env"), override=False)
+#     load_dotenv(os.path.join(parent_dir, ".env.local"), override=True)
 
 def _resolve_log_path() -> str:
-    _load_env_files()
+    #_load_env_files()
     log_file = os.getenv("LOG_FILE")
     log_dir = os.getenv("LOG_DIR", "/log")
     if not log_file:
@@ -26,7 +25,7 @@ def _resolve_log_path() -> str:
 
 def main() -> None:
     log_path = _resolve_log_path()
-    pb_url = os.getenv("PB_URL")
+    pb_url = os.getenv("PB_URL", "http://localhost:8090")
     pb_token = os.getenv("PB_TOKEN")
     if not pb_url:
         raise RuntimeError("PB_URL environment variable is required.")

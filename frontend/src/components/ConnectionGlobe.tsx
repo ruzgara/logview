@@ -289,7 +289,7 @@ function ConnectionGlobe({
         polygonCapColor={polyColor}
         polygonSideColor={polySideColor}
         polygonStrokeColor={polyStroke}
-        polygonAltitude={0.003}
+        polygonAltitude={0.006}
         // ── Arcs ──
         arcsData={arcs}
         arcStartLat={(d) => (d as ArcDatum).startLat}

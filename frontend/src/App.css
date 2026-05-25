@@ -129,6 +129,22 @@
   color: var(--pill-text-live);
 }
 
+.ghost-button {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ghost-button:hover {
+  border-color: var(--accent-border);
+  color: var(--text-h);
+}
+
 .status-metrics {
   font-size: 14px;
   color: var(--text-muted);
@@ -518,6 +534,103 @@
 .modal-state {
   padding: 16px 0;
   color: var(--text-muted);
+}
+
+.auth-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 32px;
+  box-sizing: border-box;
+}
+
+.auth-card {
+  width: min(100%, 420px);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.auth-error {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
+  font-size: 14px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.auth-field input {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  padding: 10px 12px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.auth-field input:focus {
+  outline: 2px solid var(--accent-border);
+  border-color: var(--accent);
+}
+
+.auth-submit {
+  border-radius: 12px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent);
+  color: white;
+  padding: 10px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-toggle {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  text-align: left;
+}
+
+.auth-toggle:hover {
+  color: var(--accent-strong);
 }
 
 @media (max-width: 900px) {
