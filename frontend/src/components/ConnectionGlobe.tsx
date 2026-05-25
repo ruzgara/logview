@@ -182,12 +182,12 @@ function ConnectionGlobe({
   const globeCanvas = useMemo(() => makeGlobeCanvas(isDark), [isDark])
 
   // ── Spawn one arc per new connection (newest record is always connections[0]) ──
-  const latestId = connections[0]?.id
-  useEffect(() => {
-    const conn = connections[0]
-    if (!conn) return
+  const latestConnection = connections[0]
 
-    const countryCode = conn.country?.toUpperCase() ?? ''
+  useEffect(() => {
+    if (!latestConnection) return
+
+    const countryCode = latestConnection.country?.toUpperCase() ?? ''
     const coords = COUNTRY_COORDS[countryCode]
     if (!coords) return
 
@@ -196,7 +196,7 @@ function ConnectionGlobe({
     const now = Date.now()
 
     const arc: ArcDatum = {
-      id: conn.id,
+      id: latestConnection.id,
       startLat: coords[0] + jitterLat,
       startLng: coords[1] + jitterLng,
       endLat: serverLat,
@@ -206,14 +206,17 @@ function ConnectionGlobe({
       createdAt: now,
     }
 
+    // Rule disabled: We are deliberately bridging a prop change into an 
+    // imperative animation lifecycle. This is time-bound, not derived state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setArcs((prev) => [arc, ...prev].slice(0, MAX_ARCS))
 
-    // Remove arc once the streak has fully exited (travel + buffer).
-    // No cleanup — each arc manages its own removal independently.
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       setArcs((prev) => prev.filter((a) => a.id !== arc.id))
     }, ARC_TRAVEL_MS + ARC_REMOVAL_BUFFER_MS)
-  }, [latestId, serverLat, serverLng])
+
+    return () => clearTimeout(timeoutId)
+  }, [latestConnection, serverLat, serverLng])
 
   // ── Points data: source dots (from arcs) + always-present server beacon ────
   const serverPoint = useMemo<PointDatum[]>(
@@ -247,8 +250,11 @@ function ConnectionGlobe({
 
   // ── Arc color: solid flat color, fades at tail ────────────────────────────
   const arcColor = useCallback(
-    ((d: ArcDatum) => [d.color, `${d.color}00`]) as (d: object) => string[],
-    [],
+    (d: object) => {
+      const arc = d as ArcDatum
+      return [arc.color, `${arc.color}00`]
+    },
+    []
   )
 
   // ── Kill specular glare on the globe sphere ───────────────────────────────
