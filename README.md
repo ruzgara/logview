@@ -14,4 +14,13 @@ There are 2 images: the agent, and the app.
     - At startup you must create a default user, then the dashboard will be served at /
     - The backend dashboard can be found at /_/
 
+## Container images published to GHCR
+
+On each push to `main`, GitHub Actions builds and publishes:
+
+- `ghcr.io/ruzgara/logview-backend` from `backend/Dockerfile`
+- `ghcr.io/ruzgara/logview-frontend` from `frontend/Dockerfile`
+
+Images are tagged with `latest` on `main` and with the commit SHA tag for each build.
+
 For test logs, add json logs to test_log_source.log in test/ Then run `python test_log_populator.py`. This will populate ./test/test.log. You can mount ./test/ to the agent, and provide test.log as LOG_FILE
