@@ -2,14 +2,16 @@
 
 A fancy dashboard for your logs
 
-*Who said form over function was a bad thing*
+*Form over function*
 
-Currently there are 3 parts:
+There are 2 images: the agent, and the app.
 
-- Frontend: run using `yarn run dev` in frontend/
+- The agent: uploads logs to the database
+    - It requires the log folder to be mounted as a volume (to /log by default), and the log file name provided as LOG_FILE
+    - It currently also needs a Pocketbase token as an environment variable (PB_TOKEN). To get one, you must create a superuser account via the link provided by the app at startup, then go to system collections, superusers, click on the one you created, then click on the 3 dots, impersonate, use a long time (eg 31556952 for a year), and copy the token. Then you can start the agent with the PB_TOKEN environment variable
 
-- Backend: run using `pocketbase serve` in backend/
+- The app: Includes the backend (pocketbase) and the frontend (react)
+    - At startup you must create a default user, then the dashboard will be served at /
+    - The backend dashboard can be found at /_/
 
-- Agent: run using `python main.py` in agent/
-
-For test logs, add json logs to test_log_source.log in test/ Then run `python test_log_populator.py`
+For test logs, add json logs to test_log_source.log in test/ Then run `python test_log_populator.py`. This will populate ./test/test.log. You can mount ./test/ to the agent, and provide test.log as LOG_FILE
