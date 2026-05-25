@@ -14,6 +14,7 @@ type ConnectionsTableProps = {
   serviceNameById: Record<string, string>
   onOpenDetail: (type: 'router' | 'service', id?: string) => void
   containerClassName?: string
+  showHeader?: boolean
 }
 
 function ConnectionsTable({
@@ -22,6 +23,7 @@ function ConnectionsTable({
   serviceNameById,
   onOpenDetail,
   containerClassName = 'connections-list',
+  showHeader = true,
 }: ConnectionsTableProps) {
   const listRef = useRef<HTMLDivElement | null>(null)
   const stickToTopRef = useRef(true)
@@ -62,14 +64,16 @@ function ConnectionsTable({
 
   return (
     <div className={containerClassName} ref={listRef} onScroll={handleScroll}>
-      <div className="connections-table-header">
-        <div className="header-cell">Time</div>
-        <div className="header-cell ip">IP</div>
-        <div className="header-cell country">Country</div>
-        <div className="header-cell">Details</div>
-        <div className="header-cell router">Router</div>
-        <div className="header-cell service">Service</div>
-      </div>
+      {showHeader && (
+        <div className="connections-table-header">
+          <div className="header-cell">Time</div>
+          <div className="header-cell ip">IP</div>
+          <div className="header-cell country">Country</div>
+          <div className="header-cell">Details</div>
+          <div className="header-cell router">Router</div>
+          <div className="header-cell service">Service</div>
+        </div>
+      )}
       {connections.map((connection) => {
         const routerName =
           (connection.router && routerNameById[connection.router]) ||

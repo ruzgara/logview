@@ -378,8 +378,8 @@ function App() {
     <div className="dashboard">
       <header className="header">
         <div className="header-copy">
-          <h1>Live Connections</h1>
-          <p className="subtitle">Streaming PocketBase activity</p>
+          <h1>LogView Dashboard</h1>
+          <p className="subtitle">Streaming network activity</p>
         </div>
         <section className="globe-hero" aria-label="Connection globe">
           <ConnectionGlobe
@@ -529,9 +529,13 @@ function App() {
       <div className="content-grid">
         <div className="feed-column">
           <section className="connections">
-            <div className="connections-header">
-              <h2>Connections feed</h2>
-              <span>Newest events appear at the top</span>
+            <div className="connections-table-header">
+              <div className="header-cell">Time</div>
+              <div className="header-cell ip">IP</div>
+              <div className="header-cell country">Country</div>
+              <div className="header-cell">Details</div>
+              <div className="header-cell router">Router</div>
+              <div className="header-cell service">Service</div>
             </div>
             <ConnectionsTable
               connections={connections}
@@ -539,6 +543,7 @@ function App() {
               serviceNameById={serviceNameById}
               onOpenDetail={openDetail}
               containerClassName="connections-list"
+              showHeader={false}
             />
           </section>
         </div>
@@ -592,13 +597,24 @@ function App() {
                 </div>
               )}
               {!detailLoading && !detailError && (
-                <ConnectionsTable
-                  connections={detailEvents}
-                  routerNameById={routerNameById}
-                  serviceNameById={serviceNameById}
-                  onOpenDetail={openDetail}
-                  containerClassName="detail-list"
-                />
+                <div className="detail-table">
+                  <div className="connections-table-header">
+                    <div className="header-cell">Time</div>
+                    <div className="header-cell ip">IP</div>
+                    <div className="header-cell country">Country</div>
+                    <div className="header-cell">Details</div>
+                    <div className="header-cell router">Router</div>
+                    <div className="header-cell service">Service</div>
+                  </div>
+                  <ConnectionsTable
+                    connections={detailEvents}
+                    routerNameById={routerNameById}
+                    serviceNameById={serviceNameById}
+                    onOpenDetail={openDetail}
+                    containerClassName="detail-list"
+                    showHeader={false}
+                  />
+                </div>
               )}
             </div>
           </div>

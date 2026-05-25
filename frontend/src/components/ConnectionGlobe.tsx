@@ -97,7 +97,7 @@ function makeGlobeCanvas(isDark: boolean): HTMLCanvasElement {
   const ctx = canvas.getContext('2d')!
 
   // Ocean — flat solid colour, no grid
-  ctx.fillStyle = isDark ? '#0a1628' : '#c8e3f5'
+  ctx.fillStyle = isDark ? '#0a1628' : '#beddf2'
   ctx.fillRect(0, 0, size, size)
 
   return canvas
@@ -144,13 +144,13 @@ function ConnectionGlobe({
   useEffect(() => {
     fetch('https://unpkg.com/world-atlas@2/countries-110m.json')
       .then((r) => r.json())
-      .catch(() => {/* silent — polygons optional */})
+      .catch(() => {/* silent — polygons optional */ })
 
     // Use a direct GeoJSON source instead
     fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
       .then((r) => r.json())
       .then((geo) => setCountries(geo))
-      .catch(() => {/* polygons are decorative; fail silently */})
+      .catch(() => {/* polygons are decorative; fail silently */ })
   }, [])
 
   // ── Responsive sizing ──────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ function ConnectionGlobe({
 
   // ── Country polygon color ─────────────────────────────────────────────────
   const polyColor = useCallback(
-    () => isDark ? 'rgba(30,60,100,0.75)' : 'rgba(180,210,240,0.80)',
+    () => isDark ? 'rgba(30,60,100,0.75)' : 'rgba(219, 223, 227, 0.41)',
     [isDark],
   )
   const polySideColor = useCallback(
@@ -273,7 +273,7 @@ function ConnectionGlobe({
     <div
       ref={containerRef}
       className={className}
-      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}
+      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}
     >
       <Globe
         ref={globeRef}
@@ -289,7 +289,7 @@ function ConnectionGlobe({
         polygonCapColor={polyColor}
         polygonSideColor={polySideColor}
         polygonStrokeColor={polyStroke}
-        polygonAltitude={0.008}
+        polygonAltitude={0.003}
         // ── Arcs ──
         arcsData={arcs}
         arcStartLat={(d) => (d as ArcDatum).startLat}
