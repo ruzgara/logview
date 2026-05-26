@@ -4,6 +4,10 @@ A fancy dashboard for your logs
 
 *Form over function*
 
+Currently, its built to only really work with json access logs from traefik.
+
+To run, use the docker-compose.yml file
+
 There are 2 images: the agent, and the app.
 
 - The agent: uploads logs to the database

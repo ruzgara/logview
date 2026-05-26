@@ -3,8 +3,30 @@ name: Build and Push Docker Images
 on:
   push:
     branches: [main]
+    paths:
+      - 'agent/src/**'
+      - 'agent/requirements.txt'
+      - 'agent/Dockerfile'
+      - 'frontend/src/**'
+      - 'frontend/public/**'
+      - 'frontend/package.json'
+      - 'frontend/yarn.lock'
+      - 'backend/pb_hooks/**'
+      - 'backend/pb_migrations/**'
+      - 'backend/Dockerfile'
   pull_request:
     branches: [main]
+    paths:
+      - 'agent/src/**'
+      - 'agent/requirements.txt'
+      - 'agent/Dockerfile'
+      - 'frontend/src/**'
+      - 'frontend/public/**'
+      - 'frontend/package.json'
+      - 'frontend/yarn.lock'
+      - 'backend/pb_hooks/**'
+      - 'backend/pb_migrations/**'
+      - 'backend/Dockerfile'
 
 env:
   REGISTRY: ghcr.io
@@ -94,7 +116,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/backend
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/app
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -112,6 +134,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend

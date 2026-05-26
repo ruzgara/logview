@@ -2,15 +2,7 @@ import json
 import os
 import requests
 from dataclasses import asdict
-#from dotenv import load_dotenv
-
 from file_ingest import ingest_log_file
-
-
-# def _load_env_files() -> None:
-#     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#     load_dotenv(os.path.join(parent_dir, ".env"), override=False)
-#     load_dotenv(os.path.join(parent_dir, ".env.local"), override=True)
 
 def _resolve_log_path() -> str:
     #_load_env_files()
