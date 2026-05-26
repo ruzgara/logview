@@ -6,6 +6,7 @@ import type { ConnectionRecord, RouterRecord, ServiceRecord } from './types'
 import ConnectionGlobe from './components/ConnectionGlobe'
 import AuthScreen from './components/AuthScreen'
 import { pb } from './pocketbase'
+import { useAuth, type AuthUser } from './auth-context'
 
 
 const CONNECTIONS_LIMIT = 200
@@ -27,7 +28,13 @@ type RealtimeEvent = {
 const sortByName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name)
 
-function Dashboard({ onSignOut }: { onSignOut: () => void }) {
+function Dashboard({
+  user,
+  onSignOut,
+}: {
+  user: AuthUser
+  onSignOut: () => void
+}) {
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
   const [routers, setRouters] = useState<RouterRecord[]>([])
   const [services, setServices] = useState<ServiceRecord[]>([])
@@ -504,6 +511,9 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
               <span className={`status-pill ${realtimeStatus}`}>
                 {realtimeStatus === 'connected' ? 'Live' : 'Offline'}
               </span>
+              <span className="user-email" title={user.email}>
+                {user.email}
+              </span>
               <button
                 type="button"
                 className="ghost-button"
@@ -619,31 +629,23 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => pb.authStore.isValid,
-  )
+  const { user, isAuthenticated, isInitializing, signOut } = useAuth()
 
-  useEffect(() => {
-    const unsubscribe = pb.authStore.onChange(() => {
-      setIsAuthenticated(pb.authStore.isValid)
-    }, true)
-
-    return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe()
-      }
-    }
-  }, [])
-
-  const handleSignOut = () => {
-    pb.authStore.clear()
+  if (isInitializing) {
+    return (
+      <div className="auth-screen">
+        <div className="auth-card">
+          <p className="auth-subtitle">Loading…</p>
+        </div>
+      </div>
+    )
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return <AuthScreen />
   }
 
-  return <Dashboard onSignOut={handleSignOut} />
+  return <Dashboard user={user} onSignOut={signOut} />
 }
 
 export default App

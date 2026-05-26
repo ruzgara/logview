@@ -150,6 +150,15 @@
   color: var(--text-muted);
 }
 
+.user-email {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .alert-icon-container {
   position: relative;
 }
