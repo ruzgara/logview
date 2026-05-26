@@ -2,15 +2,6 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## PocketBase configuration
-
-Set the following Vite environment variables before running the app:
-
-```
-VITE_PB_URL=http://127.0.0.1:8090
-VITE_PB_TOKEN=YOUR_POCKETBASE_AUTH_TOKEN
-```
-
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
