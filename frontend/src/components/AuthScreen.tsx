@@ -1,34 +1,40 @@
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { pb } from '../pocketbase'
+import { useAuth } from '../auth-context'
 
-type AuthMode = 'login' | 'setup'
-
-const SETUP_STORAGE_KEY = 'logview-user-setup-complete'
-
-const getDefaultMode = (): AuthMode => {
-  if (typeof window === 'undefined') {
-    return 'login'
-  }
-  return window.localStorage.getItem(SETUP_STORAGE_KEY) === 'done'
-    ? 'login'
-    : 'setup'
-}
+type AuthMode = 'login' | 'setup' | 'checking'
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'Authentication failed.'
 
 function AuthScreen() {
-  const [mode, setMode] = useState<AuthMode>(() => getDefaultMode())
+  const { signIn } = useAuth()
+  const [mode, setMode] = useState<AuthMode>('checking')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const actionLabel = useMemo(
-    () => (mode === 'login' ? 'Sign in' : 'Create user'),
-    [mode],
-  )
+  // Ask the server whether any users exist to decide which form to show.
+  // This is the only reliable check — a per-browser localStorage flag would
+  // show the setup form on any fresh browser even after the account is created.
+  useEffect(() => {
+    pb.send<{ hasUsers: boolean }>('/api/custom/has-users', { method: 'GET' })
+      .then(({ hasUsers }) => {
+        setMode(hasUsers ? 'login' : 'setup')
+      })
+      .catch(() => {
+        // Fall back to login if the check fails (e.g. older backend without
+        // the custom endpoint).
+        setMode('login')
+      })
+  }, [])
+
+  const actionLabel = useMemo(() => {
+    if (mode === 'setup') return 'Create user'
+    return 'Sign in'
+  }, [mode])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -50,8 +56,7 @@ function AuthScreen() {
         })
       }
 
-      await pb.collection('users').authWithPassword(email, password)
-      window.localStorage.setItem(SETUP_STORAGE_KEY, 'done')
+      await signIn(email, password)
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
@@ -59,11 +64,14 @@ function AuthScreen() {
     }
   }
 
-  const toggleMode = () => {
-    setError(null)
-    setPassword('')
-    setPasswordConfirm('')
-    setMode((current) => (current === 'login' ? 'setup' : 'login'))
+  if (mode === 'checking') {
+    return (
+      <div className="auth-screen">
+        <div className="auth-card">
+          <p className="auth-subtitle">Loading…</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -127,12 +135,6 @@ function AuthScreen() {
             {isSubmitting ? 'Working…' : actionLabel}
           </button>
         </form>
-
-        <button className="auth-toggle" type="button" onClick={toggleMode}>
-          {mode === 'login'
-            ? 'First time here? Create a user account.'
-            : 'Back to sign in.'}
-        </button>
       </div>
     </div>
   )
