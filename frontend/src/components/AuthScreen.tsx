@@ -1,74 +1,71 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
-import { pb } from '../pocketbase'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../auth-context'
+import { pb } from '../pocketbase'
 
-type AuthMode = 'login' | 'setup' | 'checking'
+type Mode = 'loading' | 'startup' | 'login'
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : 'Authentication failed.'
-
-function AuthScreen() {
+export function AuthScreen() {
   const { signIn } = useAuth()
-  const [mode, setMode] = useState<AuthMode>('checking')
+  const [mode, setMode] = useState<Mode>('loading')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
-  // Ask the server whether any users exist to decide which form to show.
-  // This is the only reliable check — a per-browser localStorage flag would
-  // show the setup form on any fresh browser even after the account is created.
   useEffect(() => {
-    pb.send<{ hasUsers: boolean }>('/api/custom/has-users', { method: 'GET' })
-      .then(({ hasUsers }) => {
-        setMode(hasUsers ? 'login' : 'setup')
-      })
-      .catch(() => {
-        // Fall back to login if the check fails (e.g. older backend without
-        // the custom endpoint).
+    const checkStartup = async () => {
+      try {
+        const data = await fetch(`${pb.baseUrl}/api/is-startup`).then((r) => r.json()) as { isStartup: boolean }
+        setMode(data.isStartup ? 'startup' : 'login')
+      } catch {
         setMode('login')
-      })
+      }
+    }
+    void checkStartup()
   }, [])
 
-  const actionLabel = useMemo(() => {
-    if (mode === 'setup') return 'Create user'
-    return 'Sign in'
-  }, [mode])
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
     setError(null)
 
-    if (mode === 'setup' && password !== passwordConfirm) {
-      setError('Passwords do not match.')
-      return
+    if (mode === 'startup') {
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.')
+        return
+      }
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters.')
+        return
+      }
     }
 
-    setIsSubmitting(true)
-
+    setSubmitting(true)
     try {
-      if (mode === 'setup') {
-        await pb.collection('users').create({
-          email,
-          password,
-          passwordConfirm,
+      if (mode === 'startup') {
+        const res = await fetch(`${pb.baseUrl}/api/create-first-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
         })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({})) as { message?: string }
+          throw new Error(body.message ?? 'Failed to create account.')
+        }
       }
-
       await signIn(email, password)
     } catch (err) {
-      setError(getErrorMessage(err))
+      setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
-      setIsSubmitting(false)
+      setSubmitting(false)
     }
   }
 
-  if (mode === 'checking') {
+  if (mode === 'loading') {
     return (
       <div className="auth-screen">
         <div className="auth-card">
-          <p className="auth-subtitle">Loading…</p>
+          <p className="auth-loading">Loading…</p>
         </div>
       </div>
     )
@@ -77,67 +74,69 @@ function AuthScreen() {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <div className="auth-header">
-          <h1>LogView</h1>
-          <p className="auth-subtitle">
-            {mode === 'login'
-              ? 'Sign in with your account.'
-              : 'Create the first user account to get started.'}
-          </p>
-        </div>
+        <h1 className="auth-title">LogView</h1>
+        <p className="auth-subtitle">
+          {mode === 'startup' ? 'Create your account' : 'Sign in to continue'}
+        </p>
 
-        {error && (
-          <div className="auth-error" role="alert">
-            {error}
-          </div>
-        )}
-
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label className="auth-field">
-            <span>Email</span>
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          <div className="auth-field">
+            <label htmlFor="auth-email">Email</label>
             <input
+              id="auth-email"
               type="email"
-              name="email"
-              autoComplete="email"
-              required
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@yourcompany.com"
-            />
-          </label>
-          <label className="auth-field">
-            <span>Password</span>
-            <input
-              type="password"
-              name="password"
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
               required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter a secure password"
+              autoComplete="email"
+              autoFocus
             />
-          </label>
-          {mode === 'setup' && (
-            <label className="auth-field">
-              <span>Confirm password</span>
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="auth-password">Password</label>
+            <input
+              id="auth-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              autoComplete={mode === 'startup' ? 'new-password' : 'current-password'}
+            />
+          </div>
+
+          {mode === 'startup' && (
+            <div className="auth-field">
+              <label htmlFor="auth-confirm">Confirm password</label>
               <input
+                id="auth-confirm"
                 type="password"
-                name="passwordConfirm"
-                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
                 required
-                value={passwordConfirm}
-                onChange={(event) => setPasswordConfirm(event.target.value)}
-                placeholder="Re-enter the password"
+                autoComplete="new-password"
               />
-            </label>
+            </div>
           )}
-          <button className="auth-submit" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Working…' : actionLabel}
+
+          {error && <p className="auth-error" role="alert">{error}</p>}
+
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={submitting}
+          >
+            {submitting
+              ? 'Please wait…'
+              : mode === 'startup'
+                ? 'Create account'
+                : 'Sign in'}
           </button>
         </form>
       </div>
     </div>
   )
 }
-
-export default AuthScreen
