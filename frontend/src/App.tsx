@@ -31,7 +31,7 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
   const [routers, setRouters] = useState<RouterRecord[]>([])
   const [services, setServices] = useState<ServiceRecord[]>([])
-  const [liveConnections, setLiveConnections] = useState<ConnectionRecord[]>([])
+  const [globeEvents, setGlobeEvents] = useState<ConnectionRecord[]>([])
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') {
       return 'light'
@@ -57,6 +57,8 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
   const routerMapRef = useRef<Record<string, string>>({})
   const serviceMapRef = useRef<Record<string, string>>({})
   const detailRequestRef = useRef(0)
+  const globeQueueRef = useRef<ConnectionRecord[]>([])
+  const globeFlushRef = useRef<number | null>(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -222,7 +224,16 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
             }
 
             if (action === 'create') {
-              setLiveConnections((prev) => [record, ...prev].slice(0, 50))
+              globeQueueRef.current.push(record)
+              if (globeFlushRef.current === null) {
+                globeFlushRef.current = window.requestAnimationFrame(() => {
+                  globeFlushRef.current = null
+                  const nextBatch = globeQueueRef.current.splice(0)
+                  if (nextBatch.length > 0) {
+                    setGlobeEvents(nextBatch)
+                  }
+                })
+              }
             }
 
             setConnections((prev) => {
@@ -273,6 +284,10 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
     return () => {
       isMounted = false
       void unsubscribe?.()
+      if (globeFlushRef.current !== null) {
+        window.cancelAnimationFrame(globeFlushRef.current)
+        globeFlushRef.current = null
+      }
       pb.realtime.onDisconnect = undefined
     }
   }, [])
@@ -355,7 +370,7 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
         </div>
         <section className="globe-hero" aria-label="Connection globe">
           <ConnectionGlobe
-            connections={liveConnections}
+            connections={globeEvents}
             serverCountry="JP"
             theme={theme}
           />
