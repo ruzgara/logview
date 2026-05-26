@@ -4,9 +4,9 @@ import ConnectionsTable from './components/ConnectionsTable'
 import EntityPanel from './components/EntityPanel'
 import type { ConnectionRecord, RouterRecord, ServiceRecord } from './types'
 import ConnectionGlobe from './components/ConnectionGlobe'
-import AuthScreen from './components/AuthScreen'
 import { pb } from './pocketbase'
 import { useAuth, type AuthUser } from './auth-context'
+import { AuthScreen } from './components/AuthScreen'
 
 
 const CONNECTIONS_LIMIT = 200
@@ -28,13 +28,7 @@ type RealtimeEvent = {
 const sortByName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name)
 
-function Dashboard({
-  user,
-  onSignOut,
-}: {
-  user: AuthUser
-  onSignOut: () => void
-}) {
+function Dashboard({ user }: { user: AuthUser }) {
   const [connections, setConnections] = useState<ConnectionRecord[]>([])
   const [routers, setRouters] = useState<RouterRecord[]>([])
   const [services, setServices] = useState<ServiceRecord[]>([])
@@ -60,12 +54,27 @@ function Dashboard({
   >('connecting')
   const [realtimeError, setRealtimeError] = useState<string | null>(null)
   const [alertExpanded, setAlertExpanded] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement>(null)
 
   const routerMapRef = useRef<Record<string, string>>({})
   const serviceMapRef = useRef<Record<string, string>>({})
   const detailRequestRef = useRef(0)
   const globeQueueRef = useRef<ConnectionRecord[]>([])
   const globeFlushRef = useRef<number | null>(null)
+
+  const { signOut } = useAuth()
+
+  useEffect(() => {
+    if (!profileOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [profileOpen])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -385,6 +394,32 @@ function Dashboard({
         <div className="header-actions">
           <div className="status">
             <div className="status-line">
+              <div className="profile-container" ref={profileRef}>
+                <button
+                  type="button"
+                  className="profile-icon"
+                  onClick={() => setProfileOpen((v) => !v)}
+                  aria-label="Profile menu"
+                  aria-expanded={profileOpen}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M20.5899 22C20.5899 18.13 16.7399 15 11.9999 15C7.25991 15 3.40991 18.13 3.40991 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {profileOpen && (
+                  <div className="profile-dropdown">
+                    <span className="profile-email">{user.email}</span>
+                    <button
+                      type="button"
+                      className="profile-signout"
+                      onClick={signOut}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
               {(dataError || realtimeError) && (
                 <div className="alert-icon-container">
                   <button
@@ -511,16 +546,6 @@ function Dashboard({
               <span className={`status-pill ${realtimeStatus}`}>
                 {realtimeStatus === 'connected' ? 'Live' : 'Offline'}
               </span>
-              <span className="user-email" title={user.email}>
-                {user.email}
-              </span>
-              <button
-                type="button"
-                className="ghost-button"
-                onClick={onSignOut}
-              >
-                Sign out
-              </button>
             </div>
             <span className="status-metrics">
               {connections.length} connections · {routers.length} routers ·{' '}
@@ -629,13 +654,13 @@ function Dashboard({
 }
 
 function App() {
-  const { user, isAuthenticated, isInitializing, signOut } = useAuth()
+  const { user, isAuthenticated, isInitializing } = useAuth()
 
   if (isInitializing) {
     return (
       <div className="auth-screen">
         <div className="auth-card">
-          <p className="auth-subtitle">Loading…</p>
+          <p className="auth-loading">Loading…</p>
         </div>
       </div>
     )
@@ -645,7 +670,7 @@ function App() {
     return <AuthScreen />
   }
 
-  return <Dashboard user={user} onSignOut={signOut} />
+  return <Dashboard user={user} />
 }
 
 export default App
