@@ -140,17 +140,14 @@ function ConnectionGlobe({
 
   const isDark = theme === 'dark'
 
-  // ── Load GeoJSON countries ─────────────────────────────────────────────────
+  // ── Load GeoJSON countries (bundled locally, served from public/) ──────────
   useEffect(() => {
-    fetch('https://unpkg.com/world-atlas@2/countries-110m.json')
-      .then((r) => r.json())
-      .catch(() => {/* silent — polygons optional */ })
-
-    // Use a direct GeoJSON source instead
-    fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
+    const controller = new AbortController()
+    fetch('/world.geojson', { signal: controller.signal })
       .then((r) => r.json())
       .then((geo) => setCountries(geo))
       .catch(() => {/* polygons are decorative; fail silently */ })
+    return () => controller.abort()
   }, [])
 
   // ── Responsive sizing ──────────────────────────────────────────────────────
@@ -178,45 +175,61 @@ function ConnectionGlobe({
     globe.pointOfView({ lat: serverLat, lng: serverLng, altitude: 2.0 }, 0)
   }, [serverLat, serverLng])
 
-  // ── Globe canvas texture (repaints on theme change) ───────────────────────
-  const globeCanvas = useMemo(() => makeGlobeCanvas(isDark), [isDark])
+  // ── Globe surface texture as a data URL (repaints on theme change) ─────────
+  const globeImage = useMemo(() => makeGlobeCanvas(isDark).toDataURL(), [isDark])
 
-  // ── Spawn one arc per new connection (newest record is always connections[0]) ──
-  const latestConnection = connections[0]
-
+  // ── Spawn arcs for newly seen realtime events ──────────────────────────────
   useEffect(() => {
-    if (!latestConnection) return
-
-    const countryCode = latestConnection.country?.toUpperCase() ?? ''
-    const coords = COUNTRY_COORDS[countryCode]
-    if (!coords) return
-
-    const jitterLat = (Math.random() - 0.5) * 3
-    const jitterLng = (Math.random() - 0.5) * 3
-    const now = Date.now()
-
-    const arc: ArcDatum = {
-      id: latestConnection.id,
-      startLat: coords[0] + jitterLat,
-      startLng: coords[1] + jitterLng,
-      endLat: serverLat,
-      endLng: serverLng,
-      country: countryCode || 'XX',
-      color: pickColor(countryCode),
-      createdAt: now,
+    if (connections.length === 0) {
+      return
     }
 
-    // Rule disabled: We are deliberately bridging a prop change into an 
-    // imperative animation lifecycle. This is time-bound, not derived state.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setArcs((prev) => [arc, ...prev].slice(0, MAX_ARCS))
+    const now = Date.now()
+    const newArcs = connections
+      .map((connection, index) => {
+        const countryCode = connection.country?.toUpperCase() ?? ''
+        const coords = COUNTRY_COORDS[countryCode]
+        if (!coords) return null
 
-    const timeoutId = setTimeout(() => {
-      setArcs((prev) => prev.filter((a) => a.id !== arc.id))
-    }, ARC_TRAVEL_MS + ARC_REMOVAL_BUFFER_MS)
+        const jitterLat = (Math.random() - 0.5) * 3
+        const jitterLng = (Math.random() - 0.5) * 3
+        const parsed = connection.created ? Date.parse(connection.created) : NaN
+        const createdAt = Number.isFinite(parsed) ? parsed : now + index
 
-    return () => clearTimeout(timeoutId)
-  }, [latestConnection, serverLat, serverLng])
+        return {
+          id: connection.id,
+          startLat: coords[0] + jitterLat,
+          startLng: coords[1] + jitterLng,
+          endLat: serverLat,
+          endLng: serverLng,
+          country: countryCode || 'XX',
+          color: pickColor(countryCode),
+          createdAt,
+        } satisfies ArcDatum
+      })
+      .filter((arc): arc is ArcDatum => arc !== null)
+
+    if (newArcs.length > 0) {
+      // Deliberately bridging a prop change into an imperative animation
+      // lifecycle — these arcs are time-bound visuals, not derived state.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setArcs((prev) => [...newArcs, ...prev].slice(0, MAX_ARCS))
+    }
+  }, [connections, serverLat, serverLng])
+
+  // ── Prune arcs by age (prevents lingering streaks during bursts) ──────────
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      const cutoff = Date.now() - (ARC_TRAVEL_MS + ARC_REMOVAL_BUFFER_MS)
+      setArcs((prev) => {
+        const next = prev.filter((arc) => arc.createdAt >= cutoff)
+        // Keep the same reference when nothing expired — avoids an idle re-render
+        return next.length === prev.length ? prev : next
+      })
+    }, 300)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
 
   // ── Points data: source dots (from arcs) + always-present server beacon ────
   const serverPoint = useMemo<PointDatum[]>(
@@ -287,7 +300,7 @@ function ConnectionGlobe({
         height={dimensions.height}
         backgroundColor={bgColor}
         // ── Surface: custom painted canvas ──
-        globeImageUrl={globeCanvas.toDataURL()}
+        globeImageUrl={globeImage}
         showAtmosphere={false}
         onGlobeReady={handleGlobeReady}
         // ── Country polygons ──

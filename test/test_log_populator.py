@@ -45,7 +45,7 @@ def main() -> int:
 		while not stopped:
 			target.write(random.choice(lines) + "\n")
 			target.flush()
-			time.sleep(random.uniform(0.2, 4))
+			time.sleep(random.uniform(0.1, 0.3))
 
 	return 0
 
