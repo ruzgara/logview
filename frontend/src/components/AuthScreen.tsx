@@ -44,14 +44,10 @@ export function AuthScreen() {
     setSubmitting(true)
     try {
       if (mode === 'startup') {
-        const res = await pb.send('/api/create-first-user', {
+        await pb.send('/api/create-first-user', {
           method: 'POST',
-          body: { email, password }, // Automatically stringified and Content-Type header set
+          body: { email, password },
         });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({})) as { message?: string }
-          throw new Error(body.message ?? 'Failed to create account.')
-        }
       }
       await signIn(email, password)
     } catch (err) {
