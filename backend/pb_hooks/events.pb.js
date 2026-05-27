@@ -1,3 +1,6 @@
+// Returns {"hasUsers": bool} without requiring auth, so the frontend can
+// decide whether to show the first-run setup screen or the login form.
+
 onRecordCreateRequest((e) => {
     const routerName = e.record.get("router");
     const serviceName = e.record.get("service");
