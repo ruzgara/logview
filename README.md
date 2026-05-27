@@ -24,4 +24,5 @@ TODO:
 - [X] Fix globe streaks not getting removed
 - [X] Fix auth flow
 - [X] New auth system with user creation
+- [ ] Add server location selection
 - [ ] Agent improvements

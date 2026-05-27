@@ -126,7 +126,7 @@ export function AuthScreen() {
 
           <button
             type="submit"
-            className="auth-submit"
+            className="btn btn-primary auth-submit"
             disabled={submitting}
           >
             {submitting
