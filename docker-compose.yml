@@ -1,7 +1,6 @@
 services:
   agent:
     image: ghcr.io/ruzgara/logview/agent:latest
-    platform: linux/amd64
     container_name: logview-agent
     restart: unless-stopped
     volumes:
@@ -12,9 +11,8 @@ services:
       - PB_URL=http://app:8090
       - PB_TOKEN=
   app:
-    image: ghcr.io/ruzgara/logview/backend:latest
-    platform: linux/amd64
-    container_name: logview-backend
+    image: ghcr.io/ruzgara/logview/app:latest
+    container_name: logview-app
     restart: unless-stopped
     ports:
       - "8090:8090"
