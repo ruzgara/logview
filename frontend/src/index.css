@@ -160,3 +160,7 @@ h2 {
 p {
   margin: 0;
 }
+
+svg {
+  -webkit-transform: translate(0px,0px);
+}

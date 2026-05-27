@@ -28,4 +28,10 @@ migrate((app) => {
     userRecord.setVerified(true);
     app.save(userRecord);
   }
+
+  let settings = app.findCollectionByNameOrId("settings");
+  record = new Record(settings);
+  record.set("key", "server_location");
+  record.set("value", "");
+  app.save(record);
 });
