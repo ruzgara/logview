@@ -18,3 +18,9 @@ export type ServiceRecord = {
   id: string
   name: string
 }
+
+export type SettingsRecord = {
+  id: string
+  key: string
+  value: Record<string, string> | string
+}

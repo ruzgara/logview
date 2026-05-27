@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Cog, TriangleAlert} from 'lucide-react'
 import './App.css'
 import ConnectionsTable from './components/ConnectionsTable'
 import EntityPanel from './components/EntityPanel'
 import type { ConnectionRecord, RouterRecord, ServiceRecord } from './types'
 import ConnectionGlobe from './components/ConnectionGlobe'
+import ServerLocationModal, { type ServerLocation } from './components/ServerLocationModal'
 import { pb } from './pocketbase'
 import { useAuth, type AuthUser } from './auth-context'
 import { AuthScreen } from './components/AuthScreen'
@@ -54,8 +56,12 @@ function Dashboard({ user }: { user: AuthUser }) {
   >('connecting')
   const [realtimeError, setRealtimeError] = useState<string | null>(null)
   const [alertExpanded, setAlertExpanded] = useState(false)
-  const [profileOpen, setProfileOpen] = useState(false)
-  const profileRef = useRef<HTMLDivElement>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsRef = useRef<HTMLDivElement>(null)
+  const [serverLocation, setServerLocation] = useState<ServerLocation>({})
+  const [locationConfigured, setLocationConfigured] = useState(false)
+  const [settingsRecordId, setSettingsRecordId] = useState('')
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
 
   const routerMapRef = useRef<Record<string, string>>({})
   const serviceMapRef = useRef<Record<string, string>>({})
@@ -66,15 +72,15 @@ function Dashboard({ user }: { user: AuthUser }) {
   const { signOut } = useAuth()
 
   useEffect(() => {
-    if (!profileOpen) return
+    if (!settingsOpen) return
     const handleClickOutside = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false)
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [profileOpen])
+  }, [settingsOpen])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -91,19 +97,28 @@ function Dashboard({ user }: { user: AuthUser }) {
       setTheme(event.matches ? 'dark' : 'light')
     }
 
-    if (media.addEventListener) {
-      media.addEventListener('change', handleChange)
-    } else {
-      media.addListener(handleChange)
-    }
+    media.addEventListener('change', handleChange)
+    return () => media.removeEventListener('change', handleChange)
+  }, [])
 
-    return () => {
-      if (media.removeEventListener) {
-        media.removeEventListener('change', handleChange)
-      } else {
-        media.removeListener(handleChange)
-      }
-    }
+  useEffect(() => {
+    pb.collection('settings')
+      .getFirstListItem('key = "server_location"')
+      .then((rec) => {
+        setSettingsRecordId(rec.id)
+        const val = rec.value as Record<string, string> | string
+        if (typeof val === 'object' && val.country_code) {
+          setServerLocation({ country: val.country_code })
+          setLocationConfigured(true)
+        } else if (typeof val === 'object' && val.lat_long) {
+          const [lat, lng] = val.lat_long.split(',').map(Number)
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            setServerLocation({ lat, lng })
+            setLocationConfigured(true)
+          }
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const routerNameById = useMemo(
@@ -387,36 +402,50 @@ function Dashboard({ user }: { user: AuthUser }) {
         <section className="globe-hero" aria-label="Connection globe">
           <ConnectionGlobe
             connections={globeEvents}
-            serverCountry="JP"
+            serverCountry={serverLocation.country}
+            serverLat={serverLocation.lat}
+            serverLng={serverLocation.lng}
             theme={theme}
           />
         </section>
         <div className="header-actions">
           <div className="status">
             <div className="status-line">
-              <div className="profile-container" ref={profileRef}>
+              <div className="settings-container" ref={settingsRef}>
                 <button
                   type="button"
-                  className="profile-icon"
-                  onClick={() => setProfileOpen((v) => !v)}
-                  aria-label="Profile menu"
-                  aria-expanded={profileOpen}
+                  className="settings-icon"
+                  onClick={() => setSettingsOpen((v) => !v)}
+                  aria-label="Settings menu"
+                  aria-expanded={settingsOpen}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M20.5899 22C20.5899 18.13 16.7399 15 11.9999 15C7.25991 15 3.40991 18.13 3.40991 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <Cog size={20} />
                 </button>
-                {profileOpen && (
-                  <div className="profile-dropdown">
-                    <span className="profile-email">{user.email}</span>
-                    <button
-                      type="button"
-                      className="profile-signout"
-                      onClick={signOut}
-                    >
-                      Sign out
-                    </button>
+                {settingsOpen && (
+                  <div className="settings-dropdown">
+                    <div className="settings-section">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-block"
+                        onClick={() => { setSettingsOpen(false); setLocationModalOpen(true) }}
+                      >
+                        Server Location
+                        {!locationConfigured && (
+                          <span className="btn-hint">not set</span>
+                        )}
+                      </button>
+                    </div>
+                    <div className="settings-divider" />
+                    <div className="settings-section settings-user">
+                      <span className="settings-email">{user.email}</span>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-block"
+                        onClick={signOut}
+                      >
+                        Sign out
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -429,18 +458,7 @@ function Dashboard({ user }: { user: AuthUser }) {
                     aria-label={alertExpanded ? 'Hide alert' : 'Show alert'}
                     aria-expanded={alertExpanded}
                   >
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                        fill="currentColor"
-                      />
-                    </svg>
+                    <TriangleAlert size={20} />
                   </button>
                   {alertExpanded && (
                     <div className="alert-expanded" role="alert">
@@ -595,6 +613,19 @@ function Dashboard({ user }: { user: AuthUser }) {
         </aside>
       </div>
 
+      {locationModalOpen && (
+        <ServerLocationModal
+          current={serverLocation}
+          recordId={settingsRecordId}
+          onSave={(loc) => {
+            setServerLocation(loc)
+            setLocationConfigured(true)
+            setLocationModalOpen(false)
+          }}
+          onClose={() => setLocationModalOpen(false)}
+        />
+      )}
+
       {detailModal && (
         <div className="modal-backdrop" onClick={closeDetail}>
           <div className="modal" onClick={(event) => event.stopPropagation()}>
@@ -610,7 +641,7 @@ function Dashboard({ user }: { user: AuthUser }) {
               </div>
               <button
                 type="button"
-                className="modal-close"
+                className="btn btn-ghost"
                 onClick={closeDetail}
               >
                 Close

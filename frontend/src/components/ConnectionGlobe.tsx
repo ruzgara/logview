@@ -5,7 +5,7 @@ import type { ConnectionRecord } from '../types'
 // ---------------------------------------------------------------------------
 // Country centroids
 // ---------------------------------------------------------------------------
-const COUNTRY_COORDS: Record<string, [number, number]> = {
+export const COUNTRY_COORDS: Record<string, [number, number]> = {
   AF: [33.93911, 67.709953], AL: [41.153332, 20.168331], DZ: [28.033886, 1.659626],
   AO: [-11.202692, 17.873887], AR: [-38.416097, -63.616672], AU: [-25.274398, 133.775136],
   AT: [47.516231, 14.550072], AZ: [40.143105, 47.576927], BD: [23.684994, 90.356331],
@@ -60,8 +60,8 @@ type PointDatum = {
 // ---------------------------------------------------------------------------
 // Palette — flat, saturated, cartoon-friendly
 // ---------------------------------------------------------------------------
-const DEST_LAT = 48.8566
-const DEST_LNG = 2.3522
+const DEST_LAT = 51.5074
+const DEST_LNG = -0.1278
 // One-shot travel time in ms — arc is removed from state once the streak finishes
 const ARC_TRAVEL_MS = 1800
 // Extra buffer so the arc is fully off-screen before being removed from state
