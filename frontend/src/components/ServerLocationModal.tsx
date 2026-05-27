@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { pb } from '../pocketbase'
-import { COUNTRY_COORDS } from './ConnectionGlobe'
+import { COUNTRY_COORDS } from '../countryCoords'
 
 const COUNTRY_NAMES: Record<string, string> = {
   AE: 'United Arab Emirates', AF: 'Afghanistan', AL: 'Albania',
