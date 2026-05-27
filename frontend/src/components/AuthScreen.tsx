@@ -16,8 +16,9 @@ export function AuthScreen() {
   useEffect(() => {
     const checkStartup = async () => {
       try {
-        const data = await fetch(`${pb.baseUrl}/api/is-startup`).then((r) => r.json()) as { isStartup: boolean }
-        setMode(data.isStartup ? 'startup' : 'login')
+        const data = await pb.send<{ isStartup: boolean }>('/api/is-startup', {
+          method: 'GET'
+        }); setMode(data.isStartup ? 'startup' : 'login')
       } catch {
         setMode('login')
       }
@@ -43,11 +44,10 @@ export function AuthScreen() {
     setSubmitting(true)
     try {
       if (mode === 'startup') {
-        const res = await fetch(`${pb.baseUrl}/api/create-first-user`, {
+        const res = await pb.send('/api/create-first-user', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        })
+          body: { email, password }, // Automatically stringified and Content-Type header set
+        });
         if (!res.ok) {
           const body = await res.json().catch(() => ({})) as { message?: string }
           throw new Error(body.message ?? 'Failed to create account.')
