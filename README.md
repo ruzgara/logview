@@ -23,4 +23,5 @@ For test logs, add json logs to test_log_source.log in test/ Then run `python te
 TODO:
 - [X] Fix globe streaks not getting removed
 - [X] Fix auth flow
+- [X] New auth system with user creation
 - [ ] Agent improvements
