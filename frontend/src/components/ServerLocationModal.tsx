@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { pb } from '../pocketbase'
 import { COUNTRY_COORDS } from '../countryCoords'
+import Modal from './Modal'
 
 const COUNTRY_NAMES: Record<string, string> = {
   AE: 'United Arab Emirates', AF: 'Afghanistan', AL: 'Albania',
@@ -93,116 +94,103 @@ function ServerLocationModal({ current, recordId, onSave, onClose }: Props) {
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div
-        className="modal location-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-header">
-          <div>
-            <h2>Server Location</h2>
-            <p className="modal-subtitle">
-              Set where your server should be located
-            </p>
-          </div>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
-            Close
-          </button>
-        </div>
-        <div className="modal-body">
-          <div className="location-tabs">
-            <button
-              type="button"
-              className={`btn btn-ghost location-tab${mode === 'country' ? ' active' : ''}`}
-              onClick={() => setMode('country')}
-            >
-              Country
-            </button>
-            <button
-              type="button"
-              className={`btn btn-ghost location-tab${mode === 'coords' ? ' active' : ''}`}
-              onClick={() => setMode('coords')}
-            >
-              Coordinates
-            </button>
-          </div>
-
-          {mode === 'country' && (
-            <div className="location-field">
-              <label className="location-label" htmlFor="country-select">
-                Country
-              </label>
-              <select
-                id="country-select"
-                className="location-select"
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-              >
-                <option value="">— Select a country —</option>
-                {sortedCountries.map(({ code, name }) => (
-                  <option key={code} value={code}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {mode === 'coords' && (
-            <div className="location-coords">
-              <div className="location-field">
-                <label className="location-label" htmlFor="lat-input">
-                  Latitude
-                </label>
-                <input
-                  id="lat-input"
-                  type="number"
-                  className="location-input"
-                  placeholder="e.g. 41.7255"
-                  min={-90}
-                  max={90}
-                  step="any"
-                  value={latInput}
-                  onChange={(e) => setLatInput(e.target.value)}
-                />
-              </div>
-              <div className="location-field">
-                <label className="location-label" htmlFor="lng-input">
-                  Longitude
-                </label>
-                <input
-                  id="lng-input"
-                  type="number"
-                  className="location-input"
-                  placeholder="e.g. -49.9469"
-                  min={-180}
-                  max={180}
-                  step="any"
-                  value={lngInput}
-                  onChange={(e) => setLngInput(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          {error && <p className="location-error">{error}</p>}
-
-          <div className="location-footer">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-          </div>
-        </div>
+    <Modal
+      title="Server Location"
+      subtitle="Set where your server should be located"
+      onClose={onClose}
+      className="location-modal"
+    >
+      <div className="location-tabs">
+        <button
+          type="button"
+          className={`btn btn-ghost location-tab${mode === 'country' ? ' active' : ''}`}
+          onClick={() => setMode('country')}
+        >
+          Country
+        </button>
+        <button
+          type="button"
+          className={`btn btn-ghost location-tab${mode === 'coords' ? ' active' : ''}`}
+          onClick={() => setMode('coords')}
+        >
+          Coordinates
+        </button>
       </div>
-    </div>
+
+      {mode === 'country' && (
+        <div className="location-field">
+          <label className="location-label" htmlFor="country-select">
+            Country
+          </label>
+          <select
+            id="country-select"
+            className="location-select"
+            value={selectedCountry}
+            onChange={(e) => setSelectedCountry(e.target.value)}
+          >
+            <option value="">— Select a country —</option>
+            {sortedCountries.map(({ code, name }) => (
+              <option key={code} value={code}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {mode === 'coords' && (
+        <div className="location-coords">
+          <div className="location-field">
+            <label className="location-label" htmlFor="lat-input">
+              Latitude
+            </label>
+            <input
+              id="lat-input"
+              type="number"
+              className="location-input"
+              placeholder="e.g. 41.7255"
+              min={-90}
+              max={90}
+              step="any"
+              value={latInput}
+              onChange={(e) => setLatInput(e.target.value)}
+            />
+          </div>
+          <div className="location-field">
+            <label className="location-label" htmlFor="lng-input">
+              Longitude
+            </label>
+            <input
+              id="lng-input"
+              type="number"
+              className="location-input"
+              placeholder="e.g. -49.9469"
+              min={-180}
+              max={180}
+              step="any"
+              value={lngInput}
+              onChange={(e) => setLngInput(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {error && <p className="location-error">{error}</p>}
+
+      <div className="location-footer">
+        <button type="button" className="btn btn-ghost" onClick={onClose}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 

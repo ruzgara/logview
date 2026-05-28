@@ -1,14 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Cog, TriangleAlert} from 'lucide-react'
+import { TriangleAlert} from 'lucide-react'
 import './App.css'
 import ConnectionsTable from './components/ConnectionsTable'
 import EntityPanel from './components/EntityPanel'
 import type { ConnectionRecord, RouterRecord, ServiceRecord } from './types'
 import ConnectionGlobe from './components/ConnectionGlobe'
 import ServerLocationModal, { type ServerLocation } from './components/ServerLocationModal'
+import Modal from './components/Modal'
+import ThemeToggle from './components/ThemeToggle'
+import SettingsMenu from './components/SettingsMenu'
 import { pb } from './pocketbase'
 import { useAuth, type AuthUser } from './auth-context'
 import { AuthScreen } from './components/AuthScreen'
+
+const TABLE_HEADERS = (
+  <>
+    <div className="header-cell">Time</div>
+    <div className="header-cell ip">IP</div>
+    <div className="header-cell country">Country</div>
+    <div className="header-cell">Details</div>
+    <div className="header-cell router">Router</div>
+    <div className="header-cell service">Service</div>
+  </>
+)
 
 
 const CONNECTIONS_LIMIT = 200
@@ -56,8 +70,6 @@ function Dashboard({ user }: { user: AuthUser }) {
   >('connecting')
   const [realtimeError, setRealtimeError] = useState<string | null>(null)
   const [alertExpanded, setAlertExpanded] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const settingsRef = useRef<HTMLDivElement>(null)
   const [serverLocation, setServerLocation] = useState<ServerLocation>({})
   const [locationConfigured, setLocationConfigured] = useState(false)
   const [settingsRecordId, setSettingsRecordId] = useState('')
@@ -70,17 +82,6 @@ function Dashboard({ user }: { user: AuthUser }) {
   const globeFlushRef = useRef<number | null>(null)
 
   const { signOut } = useAuth()
-
-  useEffect(() => {
-    if (!settingsOpen) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
-        setSettingsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [settingsOpen])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -411,44 +412,12 @@ function Dashboard({ user }: { user: AuthUser }) {
         <div className="header-actions">
           <div className="status">
             <div className="status-line">
-              <div className="settings-container" ref={settingsRef}>
-                <button
-                  type="button"
-                  className="settings-icon"
-                  onClick={() => setSettingsOpen((v) => !v)}
-                  aria-label="Settings menu"
-                  aria-expanded={settingsOpen}
-                >
-                  <Cog size={20} />
-                </button>
-                {settingsOpen && (
-                  <div className="settings-dropdown">
-                    <div className="settings-section">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-block"
-                        onClick={() => { setSettingsOpen(false); setLocationModalOpen(true) }}
-                      >
-                        Server Location
-                        {!locationConfigured && (
-                          <span className="btn-hint">not set</span>
-                        )}
-                      </button>
-                    </div>
-                    <div className="settings-divider" />
-                    <div className="settings-section settings-user">
-                      <span className="settings-email">{user.email}</span>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-block"
-                        onClick={signOut}
-                      >
-                        Sign out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <SettingsMenu
+                userEmail={user.email}
+                locationConfigured={locationConfigured}
+                onOpenLocationModal={() => setLocationModalOpen(true)}
+                onSignOut={signOut}
+              />
               {(dataError || realtimeError) && (
                 <div className="alert-icon-container">
                   <button
@@ -467,100 +436,7 @@ function Dashboard({ user }: { user: AuthUser }) {
                   )}
                 </div>
               )}
-              <div className="theme-switch">
-                <input
-                  type="checkbox"
-                  className="checkbox"
-                  id="theme-toggle"
-                  checked={theme === 'dark'}
-                  onChange={toggleTheme}
-                  aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'
-                    } mode`}
-                />
-                <label htmlFor="theme-toggle" className="label">
-                  <svg
-                    className="moon"
-                    width="24"
-                    height="24"
-                    strokeWidth="1.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M3 11.5066C3 16.7497 7.25034 21 12.4934 21C16.2209 21 19.4466 18.8518 21 15.7259C12.4934 15.7259 8.27411 11.5066 8.27411 3C5.14821 4.55344 3 7.77915 3 11.5066Z"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <svg
-                    className="sun"
-                    width="24"
-                    height="24"
-                    strokeWidth="1.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M22 12L23 12"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M12 2V1"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M12 23V22"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M20 20L19 19"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M20 4L19 5"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M4 20L5 19"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M4 4L5 5"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M1 12L2 12"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <div className="ball" />
-                </label>
-              </div>
+              <ThemeToggle theme={theme} onChange={toggleTheme} />
               <span className={`status-pill ${realtimeStatus}`}>
                 {realtimeStatus === 'connected' ? 'Live' : 'Offline'}
               </span>
@@ -576,14 +452,7 @@ function Dashboard({ user }: { user: AuthUser }) {
       <div className="content-grid">
         <div className="feed-column">
           <section className="connections">
-            <div className="connections-table-header">
-              <div className="header-cell">Time</div>
-              <div className="header-cell ip">IP</div>
-              <div className="header-cell country">Country</div>
-              <div className="header-cell">Details</div>
-              <div className="header-cell router">Router</div>
-              <div className="header-cell service">Service</div>
-            </div>
+            <div className="connections-table-header">{TABLE_HEADERS}</div>
             <ConnectionsTable
               connections={connections}
               routerNameById={routerNameById}
@@ -627,58 +496,33 @@ function Dashboard({ user }: { user: AuthUser }) {
       )}
 
       {detailModal && (
-        <div className="modal-backdrop" onClick={closeDetail}>
-          <div className="modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h2>{detailModal.name}</h2>
-                <p className="modal-subtitle">
-                  {detailModal.type === 'router'
-                    ? 'Router events'
-                    : 'Service events'}{' '}
-                  · {detailEvents.length} total
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={closeDetail}
-              >
-                Close
-              </button>
+        <Modal
+          title={detailModal.name}
+          subtitle={`${detailModal.type === 'router' ? 'Router events' : 'Service events'} · ${detailEvents.length} total`}
+          onClose={closeDetail}
+        >
+          {detailLoading && (
+            <div className="modal-state">Loading events…</div>
+          )}
+          {!detailLoading && detailError && (
+            <div className="modal-state" role="alert">
+              {detailError}
             </div>
-            <div className="modal-body">
-              {detailLoading && (
-                <div className="modal-state">Loading events…</div>
-              )}
-              {!detailLoading && detailError && (
-                <div className="modal-state" role="alert">
-                  {detailError}
-                </div>
-              )}
-              {!detailLoading && !detailError && (
-                <div className="detail-table">
-                  <div className="connections-table-header">
-                    <div className="header-cell">Time</div>
-                    <div className="header-cell ip">IP</div>
-                    <div className="header-cell country">Country</div>
-                    <div className="header-cell">Details</div>
-                    <div className="header-cell router">Router</div>
-                    <div className="header-cell service">Service</div>
-                  </div>
-                  <ConnectionsTable
-                    connections={detailEvents}
-                    routerNameById={routerNameById}
-                    serviceNameById={serviceNameById}
-                    onOpenDetail={openDetail}
-                    containerClassName="detail-list"
-                    showHeader={false}
-                  />
-                </div>
-              )}
+          )}
+          {!detailLoading && !detailError && (
+            <div className="detail-table">
+              <div className="connections-table-header">{TABLE_HEADERS}</div>
+              <ConnectionsTable
+                connections={detailEvents}
+                routerNameById={routerNameById}
+                serviceNameById={serviceNameById}
+                onOpenDetail={openDetail}
+                containerClassName="detail-list"
+                showHeader={false}
+              />
             </div>
-          </div>
-        </div>
+          )}
+        </Modal>
       )}
     </div>
   )
