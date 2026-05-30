@@ -5,10 +5,11 @@ type Props = {
   userEmail: string
   locationConfigured: boolean
   onOpenLocationModal: () => void
+  onOpenAgentModal: () => void
   onSignOut: () => void
 }
 
-function SettingsMenu({ userEmail, locationConfigured, onOpenLocationModal, onSignOut }: Props) {
+function SettingsMenu({ userEmail, locationConfigured, onOpenLocationModal, onOpenAgentModal, onSignOut }: Props) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -40,7 +41,16 @@ function SettingsMenu({ userEmail, locationConfigured, onOpenLocationModal, onSi
             <button
               type="button"
               className="btn btn-ghost btn-block"
-              onClick={() => { setOpen(false); onOpenLocationModal() }}
+              onClick={() => { setOpen(false); onOpenAgentModal(); }}
+            >
+              Manage Agents
+            </button>
+          </div>
+          <div className="settings-section">
+            <button
+              type="button"
+              className="btn btn-ghost btn-block"
+              onClick={() => { setOpen(false); onOpenLocationModal(); }}
             >
               Server Location
               {!locationConfigured && (
@@ -65,4 +75,4 @@ function SettingsMenu({ userEmail, locationConfigured, onOpenLocationModal, onSi
   )
 }
 
-export default SettingsMenu
+export default SettingsMenu;
