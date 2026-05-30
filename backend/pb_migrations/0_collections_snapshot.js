@@ -1126,6 +1126,104 @@ migrate((app) => {
       "type": "base",
       "updateRule": "@request.auth.id != \"\"",
       "viewRule": "@request.auth.id != \"\""
+    },
+    {
+      "createRule": "@request.auth.id != \"\" && owner.id = @request.auth.id\n",
+      "deleteRule": "@request.auth.id = owner.id",
+      "fields": [
+        {
+          "autogeneratePattern": "[a-z0-9]{15}",
+          "help": "",
+          "hidden": false,
+          "id": "text3208210256",
+          "max": 15,
+          "min": 15,
+          "name": "id",
+          "pattern": "^[a-z0-9]+$",
+          "presentable": false,
+          "primaryKey": true,
+          "required": true,
+          "system": true,
+          "type": "text"
+        },
+        {
+          "autogeneratePattern": "",
+          "help": "",
+          "hidden": false,
+          "id": "text2363381545",
+          "max": 0,
+          "min": 0,
+          "name": "type",
+          "pattern": "",
+          "presentable": false,
+          "primaryKey": false,
+          "required": false,
+          "system": false,
+          "type": "text"
+        },
+        {
+          "autogeneratePattern": "",
+          "help": "",
+          "hidden": false,
+          "id": "text1602912115",
+          "max": 0,
+          "min": 0,
+          "name": "source",
+          "pattern": "",
+          "presentable": false,
+          "primaryKey": false,
+          "required": false,
+          "system": false,
+          "type": "text"
+        },
+        {
+          "autogeneratePattern": "",
+          "help": "",
+          "hidden": true,
+          "id": "text3939563132",
+          "max": 0,
+          "min": 0,
+          "name": "access_key_hash",
+          "pattern": "",
+          "presentable": false,
+          "primaryKey": false,
+          "required": false,
+          "system": false,
+          "type": "text"
+        },
+        {
+          "cascadeDelete": false,
+          "collectionId": "_pb_users_auth_",
+          "help": "",
+          "hidden": false,
+          "id": "relation1653163849",
+          "maxSelect": 0,
+          "minSelect": 0,
+          "name": "owner",
+          "presentable": false,
+          "required": true,
+          "system": false,
+          "type": "relation"
+        },
+        {
+          "hidden": false,
+          "id": "autodate2990389176",
+          "name": "created",
+          "onCreate": true,
+          "onUpdate": false,
+          "presentable": false,
+          "system": false,
+          "type": "autodate"
+        }
+      ],
+      "id": "pbc_2726680096",
+      "indexes": [],
+      "listRule": "@request.auth.id = owner.id",
+      "name": "agents",
+      "system": false,
+      "type": "base",
+      "updateRule": "@request.auth.id = owner.id",
+      "viewRule": "@request.auth.id = owner.id"
     }
   ];
 

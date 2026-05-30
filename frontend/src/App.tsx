@@ -6,6 +6,8 @@ import EntityPanel from './components/EntityPanel'
 import type { ConnectionRecord, RouterRecord, ServiceRecord } from './types'
 import ConnectionGlobe from './components/ConnectionGlobe'
 import ServerLocationModal, { type ServerLocation } from './components/ServerLocationModal'
+import AgentManagementModal from './components/AgentManagementModal'
+import AgentCreateForm from './components/AgentCreateForm'
 import Modal from './components/Modal'
 import ThemeToggle from './components/ThemeToggle'
 import SettingsMenu from './components/SettingsMenu'
@@ -74,6 +76,9 @@ function Dashboard({ user }: { user: AuthUser }) {
   const [locationConfigured, setLocationConfigured] = useState(false)
   const [settingsRecordId, setSettingsRecordId] = useState('')
   const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [agentModalOpen, setAgentModalOpen] = useState(false)
+  const [agentCount, setAgentCount] = useState(0)
+  const [agentCountLoading, setAgentCountLoading] = useState(true)
 
   const routerMapRef = useRef<Record<string, string>>({})
   const serviceMapRef = useRef<Record<string, string>>({})
@@ -101,6 +106,14 @@ function Dashboard({ user }: { user: AuthUser }) {
     media.addEventListener('change', handleChange)
     return () => media.removeEventListener('change', handleChange)
   }, [])
+
+  useEffect(() => {
+    pb.collection('agents')
+      .getList(1, 1, { fields: 'id' })
+      .then((result) => setAgentCount(result.totalItems))
+      .catch(() => {})
+      .finally(() => setAgentCountLoading(false))
+  }, [agentModalOpen])
 
   useEffect(() => {
     pb.collection('settings')
@@ -416,6 +429,7 @@ function Dashboard({ user }: { user: AuthUser }) {
                 userEmail={user.email}
                 locationConfigured={locationConfigured}
                 onOpenLocationModal={() => setLocationModalOpen(true)}
+                onOpenAgentModal={() => setAgentModalOpen(true)}
                 onSignOut={signOut}
               />
               {(dataError || realtimeError) && (
@@ -442,45 +456,57 @@ function Dashboard({ user }: { user: AuthUser }) {
               </span>
             </div>
             <span className="status-metrics">
-              {connections.length} connections · {routers.length} routers ·{' '}
+              {agentCount} agents · {routers.length} routers ·{' '}
               {services.length} services
             </span>
           </div>
         </div>
       </header>
 
-      <div className="content-grid">
-        <div className="feed-column">
-          <section className="connections">
-            <div className="connections-table-header">{TABLE_HEADERS}</div>
-            <ConnectionsTable
-              connections={connections}
-              routerNameById={routerNameById}
-              serviceNameById={serviceNameById}
-              onOpenDetail={openDetail}
-              containerClassName="connections-list"
-              showHeader={false}
-            />
-          </section>
+      {!agentCountLoading && agentCount === 0 ? (
+        <div className="welcome-card-wrapper">
+          <div className="welcome-card">
+            <h2 className="welcome-title">Welcome to LogView</h2>
+            <p className="welcome-subtitle">
+              Create your first agent to start ingesting traffic data.
+            </p>
+            <AgentCreateForm onCreated={() => setAgentCount((n) => n + 1)} />
+          </div>
         </div>
+      ) : (
+        <div className="content-grid">
+          <div className="feed-column">
+            <section className="connections">
+              <div className="connections-table-header">{TABLE_HEADERS}</div>
+              <ConnectionsTable
+                connections={connections}
+                routerNameById={routerNameById}
+                serviceNameById={serviceNameById}
+                onOpenDetail={openDetail}
+                containerClassName="connections-list"
+                showHeader={false}
+              />
+            </section>
+          </div>
 
-        <aside className="panels">
-          <EntityPanel
-            title="Routers"
-            count={routers.length}
-            items={routers}
-            idPrefix="router"
-            onSelect={(id) => openDetail('router', id)}
-          />
-          <EntityPanel
-            title="Services"
-            count={services.length}
-            items={services}
-            idPrefix="service"
-            onSelect={(id) => openDetail('service', id)}
-          />
-        </aside>
-      </div>
+          <aside className="panels">
+            <EntityPanel
+              title="Routers"
+              count={routers.length}
+              items={routers}
+              idPrefix="router"
+              onSelect={(id) => openDetail('router', id)}
+            />
+            <EntityPanel
+              title="Services"
+              count={services.length}
+              items={services}
+              idPrefix="service"
+              onSelect={(id) => openDetail('service', id)}
+            />
+          </aside>
+        </div>
+      )}
 
       {locationModalOpen && (
         <ServerLocationModal
@@ -492,6 +518,12 @@ function Dashboard({ user }: { user: AuthUser }) {
             setLocationModalOpen(false)
           }}
           onClose={() => setLocationModalOpen(false)}
+        />
+      )}
+
+      {agentModalOpen && (
+        <AgentManagementModal
+          onClose={() => setAgentModalOpen(false)}
         />
       )}
 
