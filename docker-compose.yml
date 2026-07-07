@@ -9,7 +9,7 @@ services:
       - LOG_FILE=test.log
       - LOG_DIR=/log
       - PB_URL=http://app:8090
-      - PB_TOKEN=
+      - ACCESS_KEY=
 
   app:
     image: ghcr.io/ruzgara/logview/app:latest

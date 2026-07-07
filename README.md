@@ -25,4 +25,5 @@ TODO:
 - [X] Fix auth flow
 - [X] New auth system with user creation
 - [X] Add server location selection
+- [ ] Agent access key improvements
 - [ ] Agent improvements
