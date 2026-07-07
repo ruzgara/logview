@@ -18,11 +18,11 @@ def _resolve_log_path() -> str:
 def main() -> None:
     log_path = _resolve_log_path()
     pb_url = os.getenv("PB_URL", "http://localhost:8090")
-    pb_token = os.getenv("PB_TOKEN")
+    access_key = os.getenv("ACCESS_KEY")
     if not pb_url:
         raise RuntimeError("PB_URL environment variable is required.")
-    if not pb_token:
-        raise RuntimeError("PB_TOKEN environment variable is required.")
+    if not access_key:
+        raise RuntimeError("ACCESS_KEY environment variable is required.")
     endpoint = f"{pb_url.rstrip('/')}/api/collections/connections/records"
     for batch in ingest_log_file(log_path, batch_size=2):
         for event in batch:
@@ -30,7 +30,7 @@ def main() -> None:
             print(json.dumps(asdict(info)))
             requests.post(endpoint, json=asdict(info),
                           headers={"Content-Type": "application/json",
-                                   "Authorization": pb_token})
+                                   "X-Access-Key": access_key})
             
 if __name__ == "__main__":
     main()

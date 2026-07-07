@@ -4,6 +4,7 @@ test/*.log
 __MACOSX/
 .AppleDouble
 .LSOverride
+.vscode/
 Icon[]  
 *.swp
 *.local
