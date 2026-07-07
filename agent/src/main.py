@@ -4,8 +4,6 @@ import requests
 from dataclasses import asdict
 from file_ingest import ingest_log_file
 
-import debugpy
-
 def _resolve_log_path() -> str:
     #_load_env_files()
     log_file = os.getenv("LOG_FILE")
@@ -18,11 +16,6 @@ def _resolve_log_path() -> str:
 
 
 def main() -> None:
-    debugpy.listen(("0.0.0.0", 5678))
-    print("⏳ Debugger enabled. Waiting for client attachment on port 5678...", flush=True)
-    debugpy.wait_for_client()  # Blocks execution until the IDE connects
-    print("🚀 Debugger attached! Resuming execution.", flush=True)
-
     log_path = _resolve_log_path()
     pb_url = os.getenv("PB_URL", "http://localhost:8090")
     access_key = os.getenv("ACCESS_KEY")

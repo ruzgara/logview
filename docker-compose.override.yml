@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     image: logview-agent:local
     environment:
-      - ACCESS_KEY=lv_07KYeYkZMdiXBhQvhmgmcvWM95uJEDLzJU9Dfhxd
+      - ACCESS_KEY=lv_HBPWoBRYy9ChaJ0zUOFArXoInFq2W4clzEDSqhTI
       - LOG_FILE=test.log
       - LOG_DIR=/log
       - PB_URL=http://app:8090
