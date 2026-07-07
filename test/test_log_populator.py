@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import os
 import random
 import signal
 import time
@@ -45,6 +46,7 @@ def main() -> int:
 		while not stopped:
 			target.write(random.choice(lines) + "\n")
 			target.flush()
+			os.fsync(target.fileno())
 			time.sleep(random.uniform(0.1, 0.3))
 
 	return 0

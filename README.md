@@ -24,5 +24,9 @@ TODO:
 - [X] Fix globe streaks not getting removed
 - [X] Fix auth flow
 - [X] New auth system with user creation
-- [ ] Add server location selection
+- [X] Add server location selection
+- [X] Agent access key improvements
 - [ ] Agent improvements
+
+BUGS:
+- [ ] Data buffering issue on arm/macos devices
