@@ -5,7 +5,7 @@ import { pb } from '../pocketbase'
 type Mode = 'loading' | 'startup' | 'login'
 
 export function AuthScreen() {
-  const { signIn } = useAuth()
+  const { signIn, demoEmail, signInAsDemo } = useAuth()
   const [mode, setMode] = useState<Mode>('loading')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -57,6 +57,18 @@ export function AuthScreen() {
     }
   }
 
+  const handleDemoSignIn = async () => {
+    setError(null)
+    setSubmitting(true)
+    try {
+      await signInAsDemo()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (mode === 'loading') {
     return (
       <div className="auth-screen">
@@ -74,6 +86,26 @@ export function AuthScreen() {
         <p className="auth-subtitle">
           {mode === 'startup' ? 'Create your account' : 'Sign in to continue'}
         </p>
+
+        {demoEmail && mode === 'login' && (
+          <div className="auth-demo" role="note">
+            <p>
+              This is a demo installation. Use the demo account to look around; any
+              changes are temporary and reset when you reload the page.
+            </p>
+            <p className="auth-demo-account">
+              Demo account: <strong>{demoEmail}</strong>
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary auth-submit"
+              onClick={handleDemoSignIn}
+              disabled={submitting}
+            >
+              Continue as demo user
+            </button>
+          </div>
+        )}
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="auth-field">

@@ -73,6 +73,26 @@
   /* Prevents the header from compressing */
 }
 
+.demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
+  background: var(--accent-bg);
+  color: var(--text-h);
+  font-size: 14px;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.demo-banner svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
 .header-actions {
   display: flex;
   flex-direction: column;
@@ -980,6 +1000,28 @@
   border-radius: 8px;
   padding: 8px 12px;
   margin: 0;
+}
+
+.auth-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 24px;
+  padding: 14px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
+  background: var(--accent-bg);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.auth-demo p {
+  margin: 0;
+}
+
+.auth-demo-account {
+  color: var(--text-h);
+  overflow-wrap: anywhere;
 }
 
 .auth-submit {

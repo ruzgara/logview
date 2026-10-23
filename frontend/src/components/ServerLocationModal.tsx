@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { pb } from '../pocketbase'
+import { useAuth } from '../auth-context'
+import { setDemoLocation } from '../demoStore'
 import { COUNTRY_COORDS } from '../countryCoords'
 import Modal from './Modal'
 
@@ -54,6 +56,7 @@ function ServerLocationModal({ current, recordId, onSave, onClose }: Props) {
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { isDemo } = useAuth()
 
   const handleSave = async () => {
     setError(null)
@@ -65,9 +68,13 @@ function ServerLocationModal({ current, recordId, onSave, onClose }: Props) {
           setSaving(false)
           return
         }
-        await pb.collection('settings').update(recordId, {
-          value: { country_code: selectedCountry },
-        })
+        if (isDemo) {
+          setDemoLocation({ country: selectedCountry })
+        } else {
+          await pb.collection('settings').update(recordId, {
+            value: { country_code: selectedCountry },
+          })
+        }
         onSave({ country: selectedCountry })
       } else {
         const lat = parseFloat(latInput)
@@ -82,9 +89,13 @@ function ServerLocationModal({ current, recordId, onSave, onClose }: Props) {
           setSaving(false)
           return
         }
-        await pb.collection('settings').update(recordId, {
-          value: { lat_long: `${lat},${lng}` },
-        })
+        if (isDemo) {
+          setDemoLocation({ lat, lng })
+        } else {
+          await pb.collection('settings').update(recordId, {
+            value: { lat_long: `${lat},${lng}` },
+          })
+        }
         onSave({ lat, lng })
       }
     } catch (err) {

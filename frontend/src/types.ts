@@ -24,3 +24,10 @@ export type SettingsRecord = {
   key: string
   value: Record<string, string> | string
 }
+
+export type Agent = {
+  id: string
+  type: string
+  source: string
+  created: string
+}

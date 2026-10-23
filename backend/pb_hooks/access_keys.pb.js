@@ -62,6 +62,11 @@ routerAdd("POST", "/api/generate_agent", (e) => {
     throw new UnauthorizedError();
   }
 
+  const demoEmail = $os.getenv("DEMO_USER_EMAIL");
+  if (demoEmail && e.auth.getString("email") === demoEmail) {
+    throw new ForbiddenError("The demo account is read-only.");
+  }
+
   const body = e.requestInfo().body;
   const { agent_type, agent_source } = body;
 

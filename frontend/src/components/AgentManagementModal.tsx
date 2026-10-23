@@ -3,13 +3,9 @@ import { Trash2 } from 'lucide-react'
 import { pb } from '../pocketbase'
 import Modal from './Modal'
 import AgentCreateForm from './AgentCreateForm'
-
-type Agent = {
-    id: string
-    type: string
-    source: string
-    created: string
-}
+import { useAuth } from '../auth-context'
+import { applyDemoAgents, deleteDemoAgent } from '../demoStore'
+import type { Agent } from '../types'
 
 type Props = {
     onClose: () => void
@@ -31,6 +27,7 @@ function AgentManagementModal({ onClose }: Props) {
     const [refreshTick, setRefreshTick] = useState(0)
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
     const [deleting, setDeleting] = useState(false)
+    const { isDemo } = useAuth()
 
     useEffect(() => {
         let active = true
@@ -38,7 +35,7 @@ function AgentManagementModal({ onClose }: Props) {
             .getList<Agent>(1, 200, { sort: '-created' })
             .then((result) => {
                 if (!active) return
-                setAgents(result.items)
+                setAgents(isDemo ? applyDemoAgents(result.items) : result.items)
                 setError(null)
                 setLoading(false)
             })
@@ -48,13 +45,17 @@ function AgentManagementModal({ onClose }: Props) {
                 setLoading(false)
             })
         return () => { active = false }
-    }, [refreshTick])
+    }, [refreshTick, isDemo])
 
     const handleDelete = async () => {
         if (!confirmDeleteId) return
         setDeleting(true)
         try {
-            await pb.collection('agents').delete(confirmDeleteId)
+            if (isDemo) {
+                deleteDemoAgent(confirmDeleteId)
+            } else {
+                await pb.collection('agents').delete(confirmDeleteId)
+            }
             setConfirmDeleteId(null)
             setRefreshTick((t) => t + 1)
         } catch (err) {

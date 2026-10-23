@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { TriangleAlert} from 'lucide-react'
+import { Info, TriangleAlert } from 'lucide-react'
 import './App.css'
 import ConnectionsTable from './components/ConnectionsTable'
 import EntityPanel from './components/EntityPanel'
@@ -14,6 +14,8 @@ import SettingsMenu from './components/SettingsMenu'
 import { pb } from './pocketbase'
 import { useAuth, type AuthUser } from './auth-context'
 import { AuthScreen } from './components/AuthScreen'
+import { applyDemoAgents, getDemoLocation } from './demoStore'
+import type { Agent } from './types'
 
 const TABLE_HEADERS = (
   <>
@@ -86,7 +88,7 @@ function Dashboard({ user }: { user: AuthUser }) {
   const globeQueueRef = useRef<ConnectionRecord[]>([])
   const globeFlushRef = useRef<number | null>(null)
 
-  const { signOut } = useAuth()
+  const { signOut, isDemo } = useAuth()
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -108,18 +110,30 @@ function Dashboard({ user }: { user: AuthUser }) {
   }, [])
 
   useEffect(() => {
-    pb.collection('agents')
-      .getList(1, 1, { fields: 'id' })
-      .then((result) => setAgentCount(result.totalItems))
+    const request = isDemo
+      ? pb.collection('agents')
+        .getFullList<Agent>()
+        .then((agents) => applyDemoAgents(agents).length)
+      : pb.collection('agents')
+        .getList(1, 1, { fields: 'id' })
+        .then((result) => result.totalItems)
+    request
+      .then(setAgentCount)
       .catch(() => {})
       .finally(() => setAgentCountLoading(false))
-  }, [agentModalOpen])
+  }, [agentModalOpen, isDemo])
 
   useEffect(() => {
     pb.collection('settings')
       .getFirstListItem('key = "server_location"')
       .then((rec) => {
         setSettingsRecordId(rec.id)
+        const demoLocation = isDemo ? getDemoLocation() : undefined
+        if (demoLocation) {
+          setServerLocation(demoLocation)
+          setLocationConfigured(true)
+          return
+        }
         const val = rec.value as Record<string, string> | string
         if (typeof val === 'object' && val.country_code) {
           setServerLocation({ country: val.country_code })
@@ -133,7 +147,7 @@ function Dashboard({ user }: { user: AuthUser }) {
         }
       })
       .catch(() => {})
-  }, [])
+  }, [isDemo])
 
   const routerNameById = useMemo(
     () =>
@@ -408,6 +422,15 @@ function Dashboard({ user }: { user: AuthUser }) {
 
   return (
     <div className="dashboard">
+      {isDemo && (
+        <div className="demo-banner" role="note">
+          <Info size={16} aria-hidden="true" />
+          <span>
+            This is a demo installation with simulated traffic. Any changes you make are
+            temporary and will reset when you reload the page.
+          </span>
+        </div>
+      )}
       <header className="header">
         <div className="header-copy">
           <h1>LogView Dashboard</h1>

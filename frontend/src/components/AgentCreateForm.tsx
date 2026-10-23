@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { pb } from '../pocketbase'
+import { useAuth } from '../auth-context'
+import { createDemoAgent } from '../demoStore'
 
 type NewKeyInfo = {
     created_at: string
@@ -27,15 +29,18 @@ function AgentCreateForm({ onCreated, onCancel }: Props) {
     const [createError, setCreateError] = useState<string | null>(null)
     const [newKey, setNewKey] = useState<NewKeyInfo | null>(null)
     const [copied, setCopied] = useState(false)
+    const { isDemo } = useAuth()
 
     const handleCreate = async () => {
         setCreating(true)
         setCreateError(null)
         try {
-            const data = await pb.send<NewKeyInfo>('/api/generate_agent', {
-                method: 'POST',
-                body: JSON.stringify({ agent_type: agentType, agent_source: agentSource }),
-            })
+            const data = isDemo
+                ? createDemoAgent(agentType, agentSource)
+                : await pb.send<NewKeyInfo>('/api/generate_agent', {
+                    method: 'POST',
+                    body: JSON.stringify({ agent_type: agentType, agent_source: agentSource }),
+                })
             setNewKey(data)
             setCopied(false)
         } catch (err) {
