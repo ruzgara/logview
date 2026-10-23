@@ -9,7 +9,6 @@ services:
       - LOG_FILE=test.log
       - LOG_DIR=/log
       - PB_URL=http://app:8090
-      - PRUNE_CONNECTIONS_HOURS=
       - ACCESS_KEY=
 
   app:
@@ -20,3 +19,5 @@ services:
       - "8090:8090"
     volumes:
       - "./data:/pb/pb_data"
+    environment:
+      - PRUNE_CONNECTIONS_HOURS=24

@@ -4,6 +4,8 @@ A fancy dashboard for your logs
 
 *Form over function*
 
+[Demo](https://rzgr.uk/lv-demo)
+
 Currently, its built to only really work with json access logs from traefik.
 
 To run, use the docker-compose.yml file
