@@ -1,4 +1,4 @@
-test/*.log
+test/test.log
 .DS_Store
 .localized
 __MACOSX/
@@ -9,3 +9,4 @@ Icon[]
 *.swp
 *.local
 data/
+docker-compose.override.yml
