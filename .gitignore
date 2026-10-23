@@ -9,3 +9,4 @@ Icon[]
 *.swp
 *.local
 data/
+docker-compose.override.yml
