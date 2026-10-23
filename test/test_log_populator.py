@@ -14,6 +14,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 SOURCE_LOG = BASE_DIR / "test_log_source.log"
 TARGET_LOG = BASE_DIR / "test.log"
+# Truncate test.log once it exceeds this size; the agent re-reads from the start on truncation
+MAX_BYTES = int(os.getenv("MAX_BYTES", 10 * 1024 * 1024))
 
 
 def load_source_lines() -> list[str]:
@@ -47,6 +49,8 @@ def main() -> int:
 			target.write(random.choice(lines) + "\n")
 			target.flush()
 			os.fsync(target.fileno())
+			if target.tell() > MAX_BYTES:
+				target.truncate(0)
 			time.sleep(random.uniform(0.1, 0.3))
 
 	return 0
