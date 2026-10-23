@@ -1,4 +1,4 @@
-test/*.log
+test/test.log
 .DS_Store
 .localized
 __MACOSX/
