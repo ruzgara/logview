@@ -32,7 +32,7 @@ function AgentManagementModal({ onClose }: Props) {
     useEffect(() => {
         let active = true
         pb.collection('agents')
-            .getList<Agent>(1, 200, { sort: '-created' })
+            .getList<Agent>(1, 200, { sort: '-created', requestKey: null })
             .then((result) => {
                 if (!active) return
                 setAgents(isDemo ? applyDemoAgents(result.items) : result.items)

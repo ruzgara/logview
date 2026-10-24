@@ -22,6 +22,8 @@ There are 2 images: the agent, and the app.
 
 For test logs, add json logs to test_log_source.log in test/ Then run `python test_log_populator.py`. This will populate ./test/test.log. You can mount ./test/ to the agent, and provide test.log as LOG_FILE
 
+To test a local build, run `scripts/test-local.sh`. It builds both images from source, starts them along with the test log populator, follows the container logs, and on Ctrl-C stops everything and empties test.log. Use `--no-build` to reuse the last build and `--quiet` to skip the logs. It needs a docker-compose.override.yml with the local builds and an agent ACCESS_KEY.
+
 TODO:
 - [X] Fix globe streaks not getting removed
 - [X] Fix auth flow

@@ -112,10 +112,10 @@ function Dashboard({ user }: { user: AuthUser }) {
   useEffect(() => {
     const request = isDemo
       ? pb.collection('agents')
-        .getFullList<Agent>()
+        .getFullList<Agent>({ requestKey: null })
         .then((agents) => applyDemoAgents(agents).length)
       : pb.collection('agents')
-        .getList(1, 1, { fields: 'id' })
+        .getList(1, 1, { fields: 'id', requestKey: null })
         .then((result) => result.totalItems)
     request
       .then(setAgentCount)
